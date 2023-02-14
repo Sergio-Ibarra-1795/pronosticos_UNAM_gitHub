@@ -164,12 +164,12 @@ plot(Demanda_electrico_MA_3, col = "green", main = "Demanda con smooth MA_3")
 
 
 
-Calculating and ploting the SMA function (con lag n=5)
+Calculating and ploting the SMA function (con lag n=15)
 
 ```{r}
-Demanda_electrico_MA_5 <- SMA(Demanda_electrico_Season, order=5)
-Demanda_electrico_MA_5
-plot(Demanda_electrico_MA_5, col="brown", main="Demanda con smooth MA_5")
+Demanda_electrico_MA_15 <- SMA(Demanda_electrico_Season, order = 15)
+Demanda_electrico_MA_15
+plot(Demanda_electrico_MA_15, col="brown", main="Demanda con smooth MA_15")
 
 ```
 
@@ -177,38 +177,38 @@ plot(Demanda_electrico_MA_5, col="brown", main="Demanda con smooth MA_5")
 ```{r}
 plot(Demanda_electrico, type = "l", col = "red", xlab = "DATE", ylab = "Demand", main = "Demanda electrico'original' vs MA smooth ")
 lines(Demanda_electrico_MA_3, col = "green")
-lines(Demanda_electrico_MA_5, col = "brown")
-legend("bottomright", legend = c("Demanda electrico", "Demanda smooth MA(3)", "Demanda smooth MA(5)"), col = c("red", "green", "brown"), lty = 1)
+lines(Demanda_electrico_MA_15, col = "brown")
+legend("bottomright", legend = c("Demanda electrico", "Demanda smooth MA(3)", "Demanda smooth MA(15)"), col = c("red", "green", "brown"), lty = 1)
 ```
 
 
 ### WEIGHTED MOVING AVERAGE
 
-Calculating and ploting the WMA function (con lag n=3) & wts = c(1, 2, 3))
+Calculating and ploting the WMA function (con lag n=10) & wts = c(1, 2, 3))
 
 
 ```{r}
-Demanda_electrico_WA_3 <- WMA(Demanda_electrico_Season, order = 3)
-Demanda_electrico_WA_3
-plot(Demanda_electrico_WA_3, col="gold", main="Demanda con smooth WA_3")
+Demanda_electrico_WA_10 <- WMA(Demanda_electrico_Season, order = 10)
+Demanda_electrico_WA_10
+plot(Demanda_electrico_WA_10, col="gold", main = "Demanda con smooth WA_3")
 ```
 
 
 
 
-### COMPARANDO MA_3 vs WA_3
+### COMPARANDO MA_3 vs WA_10
 ```{r}
 plot(Demanda_electrico_MA_3, type = "l", col = "green", xlab = "DATE", ylab = "Demand", main = "Demanda electrico' smooth MA_3 vs WA_3 ")
-lines(Demanda_electrico_WA_3, col = "gold")
+lines(Demanda_electrico_WA_10, col = "gold")
 lines(Demanda_electrico, col = "red")
-legend("bottomright", legend = c("Demanda smooth MA(3)","Demanda smooth WA(3)", "Demanda electrico"), col = c("green", "gold", "red"), lty = 1)
+legend("bottomright", legend = c("Demanda smooth MA(3)","Demanda smooth WA(10)", "Demanda electrico"), col = c("green", "gold", "red"), lty = 1)
 ```
 
 
 
 ## EXPONENTIAL MOVING AVERAGE
 
-Calculating and ploting the EMA function (con lag n=3) & ratio = 0.2)
+Calculating and ploting the EMA function (con lag n=10) & ratio = 0.2)
 
 ```{r}
 Demanda_electrico_EA_0.2 <- EMA(Demanda_electrico_Season, order=3, ratio =0.2 )
