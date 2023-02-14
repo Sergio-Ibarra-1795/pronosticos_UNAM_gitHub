@@ -1,0 +1,99 @@
+---
+title: "MIS_Pronos_Suavizamiento_media_movil_1"
+author: "Sergibar"
+date: "2023-02-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+## Suavizamiento mediante media movil 
+
+Comenzaremos instalando las liberias necesarias para el desarrollo 
+
+```{r}
+
+library(tidyverse)      # data manipulation and visualization
+library(lubridate)      # easily work with dates and times
+library(fpp2)           # working with time series data
+library(zoo) 
+library(ggplot2)
+library(dplyr)
+
+```
+
+
+Vamos a importar el documento csv que contiene la demanda de gas natural en el sector eléctrico Mexicano 
+
+```{r}
+Demanda_electrico <-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM\\Demanda_electrico_2022_full.csv", header= TRUE)
+```
+
+Comprobemos que el documento Demanda_electrico se haya importado correctamente
+
+```{r}
+head(Demanda_electrico)
+summary(Demanda_electrico)
+```
+
+Recordar que en R es recomendable "transformar las bases de datos al tipo de dato DataFrame" 
+
+```{r}
+Demanda_electrico <- data.frame(Demanda_electrico)
+summary(Demanda_electrico)
+```
+
+Tengamos una "primer vista rápida" de los datos del documento Demanda_electrico
+```{r}
+
+max(Demanda_electrico['Demanded_Gas'],  na.rm = TRUE)
+```
+
+```{r}
+Demanda_electrico <- data.frame(Demanda_electrico)
+plot(DATE,Demanded_Gas,  xlim=c(1/1/2005,1/8/2022), ylim=c(0,max(Demanda_electrico['Demanded_Gas'],na.rm = TRUE)))
+                                     
+```
+
+
+
+```{r}
+
+
+Demanda_electrico$DATE <- as.POSIXct(Demanda_electrico$DATE, format= "%d/%m/%Y")
+head(Demanda_electrico)
+summary(Demanda_electrico)
+plot(Demanda_electrico,  xlim=c(2005/01/01,2022/8/1), ylim=c(0,max(Demanda_electrico['Demanded_Gas'],na.rm = TRUE)))
+                                     
+plot(testdata$dateandtime, testdata$discharge, type = "p", xlab="Day", xaxt = "n")
+axis.POSIXct(1, at=testdata$dateandtime, labels=format(testdata$dateandtime, "%d/%m"))
+
+```
+
+
+            
+                         
+                         

@@ -1,0 +1,96 @@
+---
+title: "Pronostico_class_07_Feb_part1"
+author: "Sergibar"
+date: "2023-02-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Pronosticos clase 07.Feb.2023
+El método delphi de pronósticos se basa en entrevistas/encuestas a expertos
+, se espera que las preguntas tengas escala de Lickert de manera que puedan analizarse estadísiticamente y encontrar "zonas de consenso" sobre lo que los expertos opinan acerca de un determinado tema
+
+## Tratando de importar/leer archivos de datos 
+```{r}
+
+fallos <-read.table("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM\\Datos\\Fallos.txt")
+head(fallos)
+
+acciones <-read.table("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM\\Datos\\Acciones.txt")
+head(acciones)
+
+importaciones <-read.table("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM\\Datos\\Importaciones.txt", header=TRUE, encoding = "UTF-8")
+head(importaciones)
+
+```
+
+
+```{r}
+MATPREP <-read.table("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM\\Datos\\MatPREP.txt", header=TRUE)
+head(MATPREP)
+```
+
+* Se deben de convertir las bases de datos a data Frame
+is(fallos)
+is(acciones)
+is(importaciones)
+MATPREP <- data.frame(MATPREP)
+
+
+*   Función summary en R
+```{r}
+summary(MATPREP)
+```
+ 
+ 
+*   Usando filtros de una base de datos 
+```{r}
+
+MATPREP_F <- subset(MATPREP, Sexo =="F")
+MATPREP_F 
+```
+
+
+ 
+*   Para extraer solo los valores de una determinada tabla 
+
+```{r}
+MATPREP_Sexo<-MATPREP$Sexo
+MATPREP_Sexo
+```
+
+
+*    Para saber que tipo de dato es
+```{r}
+is(MATPREP_Sexo)
+
+```
+
+*    Para dimensionar/saber cuantos elementos tiene 
+```{r}
+dim(MATPREP)
+```
+
+
+*   Para acceder a renglones y/columnas especificas del data Frame
+```{r}
+MATPREP[1,1] #Esto me traerá el Folio1 que es el objeto ubicado en [1,1]
+MATPREP[1:5] 
+```
+
+
+* Ejemplo de Gráficos de barras
+
+```{r}
+importaciones
+```
+
+
+
+
+
+
+
