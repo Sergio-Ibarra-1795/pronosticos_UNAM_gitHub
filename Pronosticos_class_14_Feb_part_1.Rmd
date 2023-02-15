@@ -1,0 +1,43 @@
+---
+title: "MIS_Pronos_Class_14_Feb"
+author: "Sergibar"
+date: "2023-02-14"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Materia: Pronosticos
+# Dr. Jair Morales C. 
+
+## Alumno: Ibarra Raramírez Sergio (414025796)
+## Fecha: Feb.2023
+
+
+## Suavizamiento mediante media movil 
+
+Comenzaremos instalando las liberias necesarias para el desarrollo 
+
+
+```{r}
+
+library(tidyverse)      # data manipulation and visualization
+library(lubridate)      # easily work with dates and times
+library(fpp2)           # working with time series data
+library(zoo)
+library(ggplot2)
+library(dplyr)
+
+library(knitr)
+library(plyr)
+library(TTR)
+
+
+```
+
+
+Vamos a importar el documento csv que contiene la demanda de gas natural en el sector eléctrico Mexicano 

@@ -96,7 +96,7 @@ Demanda_electrico_Season
 plot.ts(Demanda_electrico_Season, main = "Demanda sin componente de seasonalidad", col="blue")
 ```
 
-
+|
 
 ¿Cómo se comparan las series con el efecto y sin el efecto de la estacionalidad? 
 ```{r}
@@ -162,6 +162,17 @@ Demanda_electrico_MA_3
 plot(Demanda_electrico_MA_3, col = "green", main = "Demanda con smooth MA_3")
 ```
 
+
+```{r}
+ECM_MA3_pre <- (Demanda_electrico_Season - Demanda_electrico_MA_3) ^2
+
+ECM_MA3_pre
+plot(ECM_MA3_pre, col = "darkgreen", main = "ECM MA_3")
+
+ECM_MA3 <- sum(ECM_MA3)
+ECM_MA3
+
+```
 
 
 Calculating and ploting the SMA function (con lag n=15)
