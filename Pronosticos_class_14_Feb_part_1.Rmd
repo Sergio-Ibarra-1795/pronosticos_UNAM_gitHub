@@ -40,9 +40,14 @@ library(TTR)
 
 
 Vamos a importar el documento csv que contiene la demanda de gas natural en el sector eléctrico Mexicano 
-(Si se importa el archivo full1 será un data.frame)
+(Si se importa el archivo full1 incluirá las columnas de date & demanded_gas)
 ```{r}
-Demanda_electricoA <-read.csv("C:\\Users\\Sergio\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
+#URL desktop dell
+#Demanda_electricoA <-read.csv("C:\\Users\\Sergio\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
+#URL HPi3
+Demanda_electricoA <-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
 ```
 
 Comprobemos que el documento Demanda_electrico se haya importado correctamente
@@ -51,14 +56,18 @@ Comprobemos que el documento Demanda_electrico se haya importado correctamente
 head(Demanda_electricoA)
 summary(Demanda_electricoA)
 typeof(Demanda_electricoA)
+dim(Demanda_electricoA)
 ```
 
 AGREGAMOS UNA NUEVA COLUMNA en un tipo de formato de fecha
+Demanda_electricoA es de tipo lista con dimensiones 214x3
 ```{r}
 Demanda_electricoA$as.date = as.Date(Demanda_electricoA$Date, format = "%m/%d/%Y")
 head(Demanda_electricoA)
 tail(Demanda_electricoA)
 typeof(Demanda_electricoA)
+dim(Demanda_electricoA)
+
 ```
 
 
@@ -74,11 +83,17 @@ min_demanded_gas
 ```
 
 
-Usemos la funcion ts. de R para "hacer los datos de nuestra serie" un tato "tipo serie en R"
+Usemos la funcion ts. de R para "hacer los datos de nuestra serie" un dato "tipo serie en R"
+En este caso de manera específca la columna de Demanded_gas
 
+TODO INDICA QUE AL HACER ESTE CAMBIO SE CAMBIA EL TIPO DE DATO PUES Demanda_electricoA es de tipo lista con dimensiones 214x3
+PERO Demanda_electricoA.ts es de tipo "double" con dimensiones NULL
 ```{r}
 Demanda_electricoA.ts<- ts(Demanda_electricoA$Demanded_Gas, frequency = 12, start =c(2005,1), end =c(2022,8))
 head(Demanda_electricoA.ts)
+
+typeof(Demanda_electricoA.ts)
+dim(Demanda_electricoA.ts)
 ```
 
 
@@ -91,7 +106,7 @@ plot(Demanda_electricoA.ts, col = "red", main = "Demanda electrico 'original' ")
 Agregando "suavizamiento con Moving Average usado la libreria forecast" -MA orden 3 y centrado-
 ```{r}
 library(forecast)
-MA_m3_center = forecast::ma(Demanda_electricoA.ts, order=3, centre = TRUE)
+MA_m3_center <- forecast::ma(Demanda_electricoA.ts, order=3, centre = TRUE)
 MA_m3_center
 typeof(MA_m3_center)
 dim(MA_m3_center)
@@ -110,11 +125,11 @@ legend("bottomright", legend = c("Demanda electrico original", "Demanda electric
 Agregando "suavizamiento con Moving Average usado la libreria forecast"-MA orden 3 y NO centrado-
 ```{r}
 library(forecast)
-MA_m3_NOcenter = forecast::ma(Demanda_electricoA.ts, order=3, centre = FALSE)
+MA_m3_NOcenter <- forecast::ma(Demanda_electricoA.ts, order=3, centre = FALSE)
 MA_m3_NOcenter
 typeof(MA_m3_NOcenter)
+dim(MA_m3_center)
 ```
-
 
 Ploteando la serie original vs MA_m3_centervs MA_m3_NOcenter
 ```{r}
@@ -126,54 +141,40 @@ legend("bottomright", legend = c("Demanda electrico original", "Demanda electric
 ```
 
 
-
+Ahora quiero agregar la variable MA_m3_center a la lista Demanda_electricoA -Me manda un cerror que Demanda_electricoA tiene 214 rows y MA_m3_center solo 212
 ```{r}
-Demanda_electricoA$Demand_MA3_Center <- NA
+Demanda_electricoA$Demand_MA3_Center <- "NA"
 head(Demanda_electricoA$Demand_MA3_Center)
-head(MA_m3_center)
-typeof(MA_m3_center)
-Demanda_electricoA$Demand_MA3_Center <- "Intento de agregar colunma en tabla/sustitucion "
-head(Demanda_electricoA$Demand_MA3_Center)
-head(Demanda_electricoA)
-```
-
-
-
-```{r}
+dim(Demanda_electricoA$Demand_MA3_Center)
 dim(Demanda_electricoA)
+Demanda_electricoA$Demand_MA3_Center <- MA_m3_center
+head(Demanda_electricoA$Demand_MA3_Center)
+head(Demanda_electricoA)
+typeof(Demanda_electricoA)
+dim(Demanda_electricoA)
+
 ```
 
 
 
+Voy a intentar convetir Demanda_electricoA a un data.Frame para ver si puedo pegar la data de Demand_MA3_Center
 
 
 ```{r}
+typeof(Demanda_electricoA.ts)
+Demanda_electricoA_df <- data.frame(Demanda_electricoA.ts)
+typeof(Demanda_electricoA_df)
 
-head(Demanda_electricoA$Demand_MA3_Center)
-head(MA_m3_center)
-tail(MA_m3_center)
-dim(MA_m3_center)
-typeof(MA_m3_center)
-
-#Trying to transform the data from double to a list 
-
-#MA_m3_center_list <- as.list(MA_m3_center)
-#typeof(MA_m3_center_list)
-#head(MA_m3_center_list)
-#tail(MA_m3_center_list)
-#dim(MA_m3_center_list)
-
-
-Demanda_electricoA$Demand_MA3_Center = NA
-head(Demanda_electricoA$Demand_MA3_Center)
-Demanda_electricoA$Demand_MA3_Center <- MA_m3_center
-
-head(Demanda_electricoA$Demand_MA3_Center)
-head(Demanda_electricoA)
 ```
 
 
 
-
-
-
+Demanda_electricoA$Demand_MA3_Center <- "NA"
+head(Demanda_electricoA$Demand_MA3_Center)
+dim(Demanda_electricoA$Demand_MA3_Center)
+dim(Demanda_electricoA)
+Demanda_electricoA$Demand_MA3_Center <- MA_m3_center
+head(Demanda_electricoA$Demand_MA3_Center)
+head(Demanda_electricoA)
+typeof(Demanda_electricoA)
+dim(Demanda_electricoA)
