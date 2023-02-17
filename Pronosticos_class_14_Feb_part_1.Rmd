@@ -30,10 +30,9 @@ library(lubridate)      # easily work with dates and times
 library(fpp2)           # working with time series data
 library(zoo)
 library(ggplot2)
-library(dplyr)
-
-library(knitr)
 library(plyr)
+library(dplyr)
+library(knitr)
 library(TTR)
 
 
@@ -41,3 +40,140 @@ library(TTR)
 
 
 Vamos a importar el documento csv que contiene la demanda de gas natural en el sector eléctrico Mexicano 
+(Si se importa el archivo full1 será un data.frame)
+```{r}
+Demanda_electricoA <-read.csv("C:\\Users\\Sergio\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
+```
+
+Comprobemos que el documento Demanda_electrico se haya importado correctamente
+
+```{r}
+head(Demanda_electricoA)
+summary(Demanda_electricoA)
+typeof(Demanda_electricoA)
+```
+
+AGREGAMOS UNA NUEVA COLUMNA en un tipo de formato de fecha
+```{r}
+Demanda_electricoA$as.date = as.Date(Demanda_electricoA$Date, format = "%m/%d/%Y")
+head(Demanda_electricoA)
+tail(Demanda_electricoA)
+typeof(Demanda_electricoA)
+```
+
+
+Guardemos en variables los días min y max para poder usar en funcion ts 
+```{r}
+typeof(Demanda_electricoA$as.date)
+min_date = min(Demanda_electricoA$as.date, na.rm = T)
+min_date
+max_date =max(Demanda_electricoA$as.date, na.rm = T)
+max_date
+min_demanded_gas = min((Demanda_electricoA[, "Demanded_Gas"]), na.rm = T)
+min_demanded_gas
+```
+
+
+Usemos la funcion ts. de R para "hacer los datos de nuestra serie" un tato "tipo serie en R"
+
+```{r}
+Demanda_electricoA.ts<- ts(Demanda_electricoA$Demanded_Gas, frequency = 12, start =c(2005,1), end =c(2022,8))
+head(Demanda_electricoA.ts)
+```
+
+
+Grafica de la serie "ajustada a serie de tiempo"
+```{r}
+plot(Demanda_electricoA.ts, col = "red", main = "Demanda electrico 'original' ")
+
+```
+
+Agregando "suavizamiento con Moving Average usado la libreria forecast" -MA orden 3 y centrado-
+```{r}
+library(forecast)
+MA_m3_center = forecast::ma(Demanda_electricoA.ts, order=3, centre = TRUE)
+MA_m3_center
+typeof(MA_m3_center)
+dim(MA_m3_center)
+```
+
+
+Ploteando la serie original vs MA_m3_center
+```{r}
+plot(Demanda_electricoA.ts, col = "red", main = "Demanda electrico 'original'vs MA_m3_center ")
+lines(MA_m3_center, col="blue")
+legend("bottomright", legend = c("Demanda electrico original", "Demanda electrico MA_m3_center"), col = c("red", "blue"), lty = 1)
+
+```
+
+
+Agregando "suavizamiento con Moving Average usado la libreria forecast"-MA orden 3 y NO centrado-
+```{r}
+library(forecast)
+MA_m3_NOcenter = forecast::ma(Demanda_electricoA.ts, order=3, centre = FALSE)
+MA_m3_NOcenter
+typeof(MA_m3_NOcenter)
+```
+
+
+Ploteando la serie original vs MA_m3_centervs MA_m3_NOcenter
+```{r}
+plot(Demanda_electricoA.ts, col = "red", main = "Demanda electrico 'original'vs MA_m3_center ")
+lines(MA_m3_center, col="blue")
+lines(MA_m3_NOcenter, col="green")
+legend("bottomright", legend = c("Demanda electrico original", "Demanda electrico MA_m3_center", "Demanda electrico MA_m3_NOcenter"), col = c("red", "blue", "green"), lty = 1)
+
+```
+
+
+
+```{r}
+Demanda_electricoA$Demand_MA3_Center <- NA
+head(Demanda_electricoA$Demand_MA3_Center)
+head(MA_m3_center)
+typeof(MA_m3_center)
+Demanda_electricoA$Demand_MA3_Center <- "Intento de agregar colunma en tabla/sustitucion "
+head(Demanda_electricoA$Demand_MA3_Center)
+head(Demanda_electricoA)
+```
+
+
+
+```{r}
+dim(Demanda_electricoA)
+```
+
+
+
+
+
+```{r}
+
+head(Demanda_electricoA$Demand_MA3_Center)
+head(MA_m3_center)
+tail(MA_m3_center)
+dim(MA_m3_center)
+typeof(MA_m3_center)
+
+#Trying to transform the data from double to a list 
+
+#MA_m3_center_list <- as.list(MA_m3_center)
+#typeof(MA_m3_center_list)
+#head(MA_m3_center_list)
+#tail(MA_m3_center_list)
+#dim(MA_m3_center_list)
+
+
+Demanda_electricoA$Demand_MA3_Center = NA
+head(Demanda_electricoA$Demand_MA3_Center)
+Demanda_electricoA$Demand_MA3_Center <- MA_m3_center
+
+head(Demanda_electricoA$Demand_MA3_Center)
+head(Demanda_electricoA)
+```
+
+
+
+
+
+
