@@ -1,0 +1,29 @@
+---
+title: "MIS_Pronos_class_21_Feb2023"
+author: "Sergibar"
+date: "2023-02-21"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Materia: Pronosticos
+# Dr. Jair Morales C. 
+
+## Alumno: Ibarra Raramírez Sergio (414025796)
+## Fecha: Feb.2023, Clase 21.Feb.2023
+
+
+## Text
+
+Comenzaremos instalando las liberias necesarias para el desarrollo 
+
+Instalaremos el package HydroGOF que nos permitirá calcular todo tipo de errores dados un valor "observado" y uno "calculado" 
+```{r}
+install.packages("hydroGOF", repos = "http://cran.r-project.org/")
+```
+
