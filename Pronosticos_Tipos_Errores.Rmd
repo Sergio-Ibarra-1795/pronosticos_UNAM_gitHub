@@ -53,7 +53,10 @@ Vamos a importar el documento csv que contiene la demanda de gas natural en el s
 #Demanda_electrico_importado <-read.csv("C:\\Users\\Sergio\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
 
 #URL HPi3
-Demanda_electrico_importado <-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
+#Demanda_electrico_importado <-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
+#URL HPi5
+Demanda_electrico_importado <-read.csv("C:\Users\\llell\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM_HPi5\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
 
 ```
 
@@ -93,6 +96,7 @@ En este caso de manera específca la columna de Demanded_gas
 
 TODO INDICA QUE AL HACER ESTE CAMBIO SE CAMBIA EL TIPO DE DATO PUES Demanda_electrico_importado es de tipo lista con dimensiones 213x3
 PERO Demanda_electrico_impoartdo.ts es de tipo "double" con dimensiones NULL
+
 ```{r}
 Demanda_electrico_importado.ts<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1), end =c(2022,8))
 head(Demanda_electrico_importado.ts)
@@ -107,6 +111,7 @@ Grafica de la serie "ajustada a serie de tiempo"
 plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'original' ")
 
 ```
+
 Una vez teniendo el objeto como ts, le podemos "aplicar el smoothing method called MA" 
 
 
