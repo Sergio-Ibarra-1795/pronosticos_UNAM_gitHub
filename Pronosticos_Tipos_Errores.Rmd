@@ -24,7 +24,7 @@ Comenzaremos instalando las liberias necesarias para el desarrollo
 
 Instalaremos el package HydroGOF que nos permitirá calcular todo tipo de errores dados un valor "observado" y uno "calculado" 
 ```{r}
-install.packages("hydroGOF", repos = "http://cran.r-project.org/")
+##install.packages("hydroGOF", repos = "http://cran.r-project.org/")
 ```
 
 
@@ -53,10 +53,10 @@ Vamos a importar el documento csv que contiene la demanda de gas natural en el s
 #Demanda_electrico_importado <-read.csv("C:\\Users\\Sergio\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
 
 #URL HPi3
-#Demanda_electrico_importado <-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
+Demanda_electrico_importado<-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
 
 #URL HPi5
-Demanda_electrico_importado <-read.csv("C:\Users\\llell\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM_HPi5\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
+#Demanda_electrico_importado <-read.csv("C:\Users\\llell\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM_HPi5\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
 
 ```
 
@@ -503,7 +503,7 @@ As we discussed, RMSE gives greater importance to the highest errors. This comes
 Generally speaking, the median is more robust to outliers than the average. This is rather important in a supply chain environment as we can face many outliers due to encoding mistakes or demand peaks (marketing, promotions, spot deals).
 
 
-### Ejemplo de calculo de varios tipos de errores para el dos casos de suavizamient
+### Ejemplo de calculo de varios tipos de errores para el dos casos de suavizamientos
 
 Ahora implementemos la función gof que nos permitirá calcular "muchos tipos de errores" entre dos vectores de datos dados 
 (https://www.youtube.com/watch?v=WBbOh-Z1dmE)
@@ -527,6 +527,8 @@ mape_Reported_vs_MA3Center
 
 En general se nota que "los pronósticos de MA_3_Centrados están desviados por entre 72-111 "puntos"
 Lo que respresenta un 2.28% de error poercentual
+
+
 
 
 #### electrico_demanded_reported vs MA_M3_NOcenter_placeholder

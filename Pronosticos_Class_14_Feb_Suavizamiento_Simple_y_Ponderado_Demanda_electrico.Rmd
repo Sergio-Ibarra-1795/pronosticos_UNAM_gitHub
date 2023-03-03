@@ -1,5 +1,5 @@
 ---
-title: "MIS_Pronos_Class_14_Feb"
+title: "MIS_Pronos_Class_14_Feb_Suavizamiento_Simple_y_Ponderado_Demanda_electrico"
 author: "Sergibar"
 date: "2023-02-14"
 output:
@@ -52,10 +52,10 @@ Vamos a importar el documento csv que contiene la demanda de gas natural en el s
 (Si se importa el archivo full1 incluirá las columnas de date & demanded_gas)
 ```{r}
 #URL desktop dell
-Demanda_electricoA <-read.csv("C:\\Users\\Sergio\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
+#Demanda_electricoA <-read.csv("C:\\Users\\Sergio\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
 
 #URL HPi3
-#Demanda_electricoA <-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
+Demanda_electricoA <-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
 
 ```
 

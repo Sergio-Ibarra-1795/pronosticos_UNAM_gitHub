@@ -252,9 +252,9 @@ accuracy(Demanda_electrico_forecast_con_datos_SES)
 Let´s plot original serie vs the forecast USING THE FORECAST METHOD!!
 
 ```{r}
-plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'original'vs Holt-Winters ")
-lines(Demanda_electrico_forecast_con_datos_SES, col="blue")
-legend("bottomright", legend = c("Demanda electrico original", "Demanda_electrico_forecast_con_datos_SES"), col = c("red", "blue"), lty = 1)
+#plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'original'vs Holt-Winters ")
+#lines(Demanda_electrico_forecast_con_datos_SES, col="blue")
+#legend("bottomright", legend = c("Demanda electrico original", "Demanda_electrico_forecast_con_datos_SES"), col = c("red", "blue"), lty = 1)
 
 ```
 
@@ -380,8 +380,22 @@ Is an extension of Holt's exponential smoothing that captures seasonality. This 
 
 This method is best for data with trend and seasonality that does not increase over time. It results in a curved forecast that shows the seasonal changes in the data.
 
+https://otexts.com/fpp2/holt-winters.html
 
 
+$$\begin{align*}
+  \hat{y}_{t+h|t} &= \ell_{t} + hb_{t} + s_{t+h-m(k+1)} \\
+  \ell_{t} &= \alpha(y_{t} - s_{t-m}) + (1 - \alpha)(\ell_{t-1} + b_{t-1})\\
+  b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 - \beta^*)b_{t-1}\\
+  s_{t} &= \gamma (y_{t}-\ell_{t-1}-b_{t-1}) + (1-\gamma)s_{t-m},
+\end{align*}$$
+
+The equation for the seasonal component is often expressed as
+
+$$s_{t} = \gamma^* (y_{t}-\ell_{t})+ (1-\gamma^*)s_{t-m}$$
+If we substitute  ℓt  from the smoothing equation for the level of the component form above, we get
+
+$$s_{t} = \gamma^*(1-\alpha) (y_{t}-\ell_{t-1}-b_{t-1})+ [1-\gamma^*(1-\alpha)]s_{t-m}$$
 
 
 #### Holt-Winters multiplicative 
@@ -390,6 +404,12 @@ Is similar to the Holt-Winters’ additive method. Holt-Winters’ Multiplicativ
 
 This method is best for data with trend and with seasonality that increases over time. It results in a curved forecast that reproduces the seasonal changes in the data.
 
+$$\begin{align*}
+  \hat{y}_{t+h|t} &= (\ell_{t} + hb_{t})s_{t+h-m(k+1)} \\
+  \ell_{t} &= \alpha \frac{y_{t}}{s_{t-m}} + (1 - \alpha)(\ell_{t-1} + b_{t-1})\\
+  b_{t} &= \beta^*(\ell_{t}-\ell_{t-1}) + (1 - \beta^*)b_{t-1}                \\
+  s_{t} &= \gamma \frac{y_{t}}{(\ell_{t-1} + b_{t-1})} + (1 - \gamma)s_{t-m}
+\end{align*}$$
 
 
 ## Classic Seasonal Forecasting Method Parameters
@@ -447,7 +467,7 @@ lines(Smoothed_values_Demanda_electrico_HW , col='purple')
 
 LEt´s plot the forecast
 ```{r}
-plot(Demanda_electrico_HW$mean)
+#plot(Demanda_electrico_HW$mean)
 
 ```
 
