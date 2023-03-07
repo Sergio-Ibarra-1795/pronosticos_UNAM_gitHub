@@ -148,11 +148,11 @@ $$Y<estimada>_{i} = T<tendencia>_{t} * E<estacionalidad>_{i}$$
 # Create the data frame
 serie_original <- data.frame(
   Trimestre = c("1er", "2do", "3er", "4to"),
-  `'2003'` = c(120, 90, 90, 100),
-  `'2004'` = c(130, 110, 110, 130),
-  `'2005'` = c(140, 120, 110, 150),
-  `'2006'` = c(150, 140, 140, 170),
-  `'2007'` = c(180, 180, 170, 170)
+  `2003` = c(120, 90, 90, 100),
+  `2004` = c(130, 110, 110, 130),
+  `2005` = c(140, 120, 110, 150),
+  `2006` = c(150, 140, 140, 170),
+  `2007` = c(180, 180, 170, 170)
 )
 
 # Print the data frame
@@ -168,7 +168,36 @@ typeof(serie_original$X2003)
 
 
 
+#### To be able to use HoltWinters Methond in R, our data must be in a 'time series' type of data, time series methods come from the forecast library
 
+
+```{r}
+serie_original_2003.ts<- ts(serie_original$X2003, frequency = 4, start =c(2003,1))
+head(serie_original_2003.ts)
+
+typeof(serie_original_2003.ts)
+dim(serie_original_2003.ts)
+```
+
+
+
+
+Then we plot the 'original serie_original_2003.ts time series'
+```{r}
+plot(serie_original_2003.ts, col = "red", main = "serie_original_2003.ts ")
+
+```
+
+
+
+Then we are able to apply the SES method in R  
+
+```{r}
+serie_original_2003_SES <- ses(serie_original_2003.ts, alpha=0.2)
+head(serie_original_2003_SES)
+tail(serie_original_2003_SES)
+typeof(serie_original_2003_SES)
+```
 
 
 
