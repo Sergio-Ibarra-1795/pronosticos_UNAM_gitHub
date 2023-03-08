@@ -1,0 +1,84 @@
+---
+title: "Pronosticos_Class_07_Marzo_Modelo_Linieal1"
+author: "Sergibar"
+date: "2023-03-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Modelos Lineales para pronóstico
+
+
+
+```{r}
+
+
+y =C(16.68, 11.5, 12.03, 14.88, 13.75, 18.11, 8, 17.83, 79.24, 21.5, 40.33, 21, 13.5, 19.75, 24, 29, 15.35, 19, 9.5, 35.1, 17.9, 52.32, 18.75, 19.83, 10.75)
+
+
+x = c(7, 3, 3, 4, 6, 7, 2, 7, 30, 5, 16, 10, 4, 6, 9, 10, 6, 7, 3, 17, 10, 26, 9, 8, 4)
+```
+
+
+Se tiene una observacion de 33 muestras para medir Demanda de oxigeno quimico vs reduccion de solidos 
+
+
+XX: Reducción de solidos
+YY: Demanda de oxigeno quimico
+
+
+
+```{r}
+xx <- as.matrix(c(3,7,11,15,18,27,29,30,30,31,31,32,33,33,34,36,36,36,37,38,39,39,39,40,41,42,42,43,44,45,46,47,50), nrow=33, ncol=1)
+xx
+
+yy <- as.matrix(c(5,11,21,16,16,28,27,25,35,30,40,32,34,32,34,37,38,34,36,38,37,36,45,39,41,40,44,37,44,46,46,49,51),nrow=33, ncol=1)
+yy
+
+```
+
+
+
+```{r}
+TabData <- cbind(xx,yy)
+colnames(TabData) <- c("Redsol","Demoxi")
+
+##Conviritiendo en data.frame
+TabData_frame<- as.data.frame(TabData)
+TabData_frame
+
+plot(TabData_frame$Redsol, TabData_frame$Demoxi, pch = 16, cex= 1.5, xlab="Reducción de sólidos", ylab="Demanda oxigeno quimico")
+     
+```
+
+Viendo la correlación entre las variables
+
+```{r}
+cor(TabData_frame)
+```
+
+
+### Vamos a ajustar el modelo lineal
+```{r}
+modelo_lineal <- lm(TabData_frame$Demoxi ~1 + TabData_frame$Redsol)
+modelo_lineal
+```
+
+### Analizando el modelo lineal 
+
+```{r}
+summary(modelo_lineal)
+```
+
+### Diagnostico de residuales
+
+```{r}
+plot(modelo_lineal)
+```
+
+
+
+
