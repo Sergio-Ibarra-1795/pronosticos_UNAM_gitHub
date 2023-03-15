@@ -368,15 +368,63 @@ summary(ajuste_crime7)
 plot(ajuste_crime7)
 ```
 
+EJEMPLO CON UNA SOLA VARIABLE 
 
+```{r}
+ajuste_crimeS <- lm(y~1++GDP, data=UScrime)
+ajuste_crimeS
+summary(ajuste_crimeS)
+plot(ajuste_crimeS)
+```
+
+
+EJEMPLO CON UNA SOLA VARIABLE 
+
+
+```{r}
+ajuste_crimeS2 <- lm(y~-1++GDP, data=UScrime)
+ajuste_crimeS2
+summary(ajuste_crimeS2)
+plot(ajuste_crimeS2)
+```
 
 
 Modelo de la compañera Karen
 ```{r}
+
 ajuste_crime8 <- lm(y~1++Po2+Ineq+Pop, data=UScrime)
 ajuste_crime8
 summary(ajuste_crime8)
 plot(ajuste_crime8)
 ```
 
+#### Vamos a importar datos que nos dió el profre
+
+```{r}
+energy_datos <- read.table('C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\energy.txt')
+energy_datos
+```
+
+
+Transformando a serie de tiempo
+
+```{r}
+energy_datos_ts <- ts(energy_datos, frequency = 12, start=c(1985,1))
+energy_datos_ts
+plot(energy_datos_ts)
+```
+
+
+```{r}
+par(mfrow=c(3,4))
+
+mes <- c("Ener", "Feb", "Mar", "apr", "May", "Jun", "Jul", "Ago", "Sept", "Oct", "Nov", "Dec")
+
+for(j in 1:12)
+{
+  
+  bp = window(energy_datos_ts, start=c(1985,j), delta=1)
+  plot(bp, main= paste("Mes", mes[j]), type="o", ylim=c(180,305))
+}
+```
 
