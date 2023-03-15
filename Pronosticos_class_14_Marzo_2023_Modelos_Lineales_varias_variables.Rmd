@@ -300,6 +300,19 @@ fviz_eig(data.pca, addlabels = TRUE)
 ```
 
 
+Contribución de variables a la DIM1
+```{r}
+fviz_cos2(data.pca, choice = "var", Top=5)
+```
+
+
+Contribución de variables a la DIM2
+```{r}
+fviz_cos2(data.pca, choice = "var", Top=5, axes=2)
+```
+
+
+
 
 ```{r}
 fviz_cos2(data.pca, choice = "var", axes = 1:9)
@@ -323,9 +336,47 @@ summary(ajuste_crime3)
 
 
 ```{r}
-ajuste_crime4 <- lm(y~1++GDP+NW+Time, data=UScrime)
+ajuste_crime4 <- lm(y~1++GDP+Pop+Time, data=UScrime)
 ajuste_crime4
 summary(ajuste_crime4)
+```
+
+
+
+```{r}
+ajuste_crime5 <- lm(y~1++GDP+Pop+Ineq+Ed, data=UScrime)
+ajuste_crime5
+summary(ajuste_crime5)
+```
+
+
+
+
+```{r}
+ajuste_crime6 <- lm(y~1++GDP+Ineq+Ed, data=UScrime)
+ajuste_crime6
+summary(ajuste_crime6)
+plot(ajuste_crime6)
+```
+
+
+ESTA FUE LA MEJOR A LA QUE YO LLEGUÉ CON AYUDA DEL PCA 
+```{r}
+ajuste_crime7 <- lm(y~1++GDP+Po2+Ineq, data=UScrime)
+ajuste_crime7
+summary(ajuste_crime7)
+plot(ajuste_crime7)
+```
+
+
+
+
+Modelo de la compañera Karen
+```{r}
+ajuste_crime8 <- lm(y~1++Po2+Ineq+Pop, data=UScrime)
+ajuste_crime8
+summary(ajuste_crime8)
+plot(ajuste_crime8)
 ```
 
 
