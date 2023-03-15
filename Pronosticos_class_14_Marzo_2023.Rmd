@@ -1,0 +1,331 @@
+---
+title: "Pronosticos_class_14_Marzo_2023"
+author: "Sergibar"
+date: "2023-03-14"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Continuación de Modelos lineales (Ahora multivariados)
+
+Se había visto que para los modelos lineales se puede hacer transformaciones como Ln(y)
+
+#### Entonces para los modelos lineales con más de una variable 
+$$ y = b0 +b1*x1 + b2*x2 + b3*x3 ... bn*xn$$
+
+
+Vamos a hacer uso de la base de datos mtcars
+
+```{r}
+data("mtcars")
+head(mtcars)
+```
+
+```{r}
+summary(mtcars)
+```
+
+```{r}
+dim(mtcars)
+plot(mtcars)
+```
+Se puede hacer una tabla de correlacion entre los pares de variables
+
+```{r}
+cor(mtcars)
+```
+
+#### Intento de PCA
+
+```{r}
+install.packages("corrr")
+library('corrr')
+```
+
+
+
+
+```{r}
+install.packages("ggcorrplot")
+library(ggcorrplot)
+```
+
+FactoMineR package in R
+
+Mainly used for multivariate exploratory data analysis; the factoMineR package gives access to the PCA module to perform principal component analysis.
+
+```{r}
+install.packages("FactoMineR")
+library("FactoMineR")
+```
+
+
+Normalizing the data
+As stated early in the article, PCA only works with numerical values. So, we need to get rid of the Country column. Also, the Total column is not relevant to the analysis since it is the linear combination of the remaining numerical variables.
+
+The code below creates new data with only numeric columns.
+
+
+Now, the normalization can be applied using the scale() function. 
+
+
+```{r}
+mtcars_noMPG <- mtcars[, -1] 
+head(mtcars_noMPG)
+```
+
+
+```{r}
+mtcars_normalized <- scale(mtcars_noMPG)
+head(mtcars_normalized)
+```
+
+
+Compute the correlation matrix
+Even though the covariance matrix is stated in the previous five steps, the correlation also can be used, and can be computed using the cor() function from the corrr package. The ggcorrplot() can be applied then for better visualization.   
+
+
+```{r}
+corr_matrix <- cor(mtcars_normalized)
+ggcorrplot(mtcars_normalized)
+```
+
+
+The result of the correlation matrix can be interpreted as follow: 
+
+The higher the value, the most positively correlated the two variables are.
+The closer the value to -1, the most negatively correlated they are.
+
+
+Applying PCA
+Now, all the resources are available to conduct the PCA analysis. First, the princomp() computes the PCA, and summary() function shows the result.
+
+
+
+```{r}
+data.pca <- princomp(corr_matrix)
+summary(data.pca)
+```
+
+
+Each component explains a percentage of the total variance in the data set. 
+
+It’s great to have the first two components, but what do they really mean? 
+
+This can be answered by exploring how they relate to each column using the loadings of each principal component. 
+
+
+```{r}
+data.pca$loadings[, 1:9]
+```
+
+```{r}
+install.packages("factoextra")  # Install the package
+library(factoextra)            # Load the package
+
+
+fviz_eig(data.pca, addlabels = TRUE)
+```
+
+
+
+```{r}
+fviz_cos2(data.pca, choice = "var", axes = 1:9)
+```
+
+
+
+
+### Continuamos con la clase sobre modelo lineales
+
+```{r}
+ajuste1 <- lm(mpg~1++hp+wt+cyl+disp, data=mtcars)
+ajuste1
+```
+
+```{r}
+summary(ajuste1)
+```
+
+
+
+
+```{r}
+
+ajuste2 <- lm(mpg~1+wt+am, data=mtcars)
+ajuste2
+summary(ajuste2)
+```
+
+
+
+
+```{r}
+
+ajuste3 <- lm(mpg~1+wt+cyl, data=mtcars)
+ajuste3
+summary(ajuste3)
+```
+
+
+```{r}
+plot(ajuste3)[0]
+```
+
+
+
+```{r}
+
+ajuste4 <- lm(mpg~1+wt+qsec, data=mtcars)
+ajuste4
+summary(ajuste4)
+```
+
+
+
+```{r}
+
+ajuste5 <- lm(mpg~1+wt+qsec+am, data=mtcars)
+ajuste5
+summary(ajuste5)
+```
+
+
+Ajuste con el resultado de PCA 
+```{r}
+ajuste_PCA1 <- lm(mpg~1+cyl+disp, data=mtcars)
+ajuste_PCA1
+summary(ajuste_PCA1)
+```
+
+
+#### Ejemplo con data UScrime
+
+```{r}
+library(MASS)
+data(UScrime)
+head(UScrime)
+```
+
+```{r}
+summary(UScrime)
+dim(UScrime)
+```
+
+```{r}
+plot(UScrime)
+```
+
+
+
+```{r}
+cor(UScrime)
+```
+
+```{r}
+help('UScrime')
+```
+
+
+
+```{r}
+ajuste_crime1 <- lm(y~1++M+U1+Time, data=UScrime)
+ajuste_crime1
+summary(ajuste_crime1)
+```
+
+
+
+
+```{r}
+UScrime_drop <- UScrime[, -which(names(UScrime) == "y")]  # Drop the "y" variable
+
+head(UScrime_drop)
+```
+
+
+```{r}
+UScrime_normalized <- scale(UScrime_drop)
+head(UScrime_normalized)
+```
+
+
+Compute the correlation matrix
+Even though the covariance matrix is stated in the previous five steps, the correlation also can be used, and can be computed using the cor() function from the corrr package. The ggcorrplot() can be applied then for better visualization.   
+
+
+```{r}
+corr_matrix <- cor(UScrime_normalized)
+ggcorrplot(UScrime_normalized)
+```
+
+
+The result of the correlation matrix can be interpreted as follow: 
+
+The higher the value, the most positively correlated the two variables are.
+The closer the value to -1, the most negatively correlated they are.
+
+
+Applying PCA
+Now, all the resources are available to conduct the PCA analysis. First, the princomp() computes the PCA, and summary() function shows the result.
+
+
+
+```{r}
+data.pca <- princomp(corr_matrix)
+summary(data.pca)
+```
+
+
+Each component explains a percentage of the total variance in the data set. 
+
+It’s great to have the first two components, but what do they really mean? 
+
+This can be answered by exploring how they relate to each column using the loadings of each principal component. 
+
+
+```{r}
+data.pca$loadings[, 1:15]
+```
+
+```{r}
+install.packages("factoextra")  # Install the package
+library(factoextra)            # Load the package
+
+
+fviz_eig(data.pca, addlabels = TRUE)
+```
+
+
+
+```{r}
+fviz_cos2(data.pca, choice = "var", axes = 1:9)
+```
+
+
+
+```{r}
+ajuste_crime2 <- lm(y~1++GDP+Ineq+Ed, data=UScrime)
+ajuste_crime2
+summary(ajuste_crime2)
+```
+
+
+
+```{r}
+ajuste_crime3 <- lm(y~1++GDP+Ineq+Ed+So, data=UScrime)
+ajuste_crime3
+summary(ajuste_crime3)
+```
+
+
+```{r}
+ajuste_crime4 <- lm(y~1++GDP+NW+Time, data=UScrime)
+ajuste_crime4
+summary(ajuste_crime4)
+```
+
+
