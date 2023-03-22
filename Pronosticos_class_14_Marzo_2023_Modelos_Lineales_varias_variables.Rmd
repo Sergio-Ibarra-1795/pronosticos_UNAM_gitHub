@@ -428,3 +428,19 @@ for(j in 1:12)
 }
 ```
 
+
+#### Una variable que nos mide la tendencia  
+ (Esencialmente se toma un vector con el tamaño de nuestras observaciones)
+```{r}
+vector_base <- 1:142
+vector_base
+```
+
+
+```{r}
+elecseason <- model.matrix(1+factor(cycle(energy_datos_ts)))[,-1]
+dimnames(elecseason)[[2]] <- c("Feb", "Mar", "apr", "May", "Jun", "Jul", "Ago", "Sept", "Oct", "Nov", "Dec")
+
+elecus.lm <- lm(e)
+```
+

@@ -1,0 +1,370 @@
+---
+title: "MIS_Pronos_Class_14_Feb_Suavizamiento_Simple_y_Ponderado_Demanda_electrico"
+author: "Sergibar"
+date: "2023-02-14"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Materia: Pronosticos
+# Dr. Jair Morales C. 
+
+## Alumno: Ibarra Raramírez Sergio (414025796)
+## Fecha: Feb.2023
+
+
+## Suavizamiento mediante media movil 
+
+Comenzaremos instalando las liberias necesarias para el desarrollo 
+
+
+
+```{r}
+
+library(pracma)
+
+```
+
+
+
+
+```{r}
+
+library(tidyverse)      # data manipulation and visualization
+library(lubridate)      # easily work with dates and times
+library(fpp2)           # working with time series data
+library(zoo)
+library(ggplot2)
+library(plyr)
+library(dplyr)
+library(knitr)
+library(TTR)
+
+```
+
+
+Vamos a importar el documento csv que contiene la demanda de gas natural en el sector eléctrico Mexicano 
+(Si se importa el archivo full1 incluirá las columnas de date & demanded_gas)
+```{r}
+#URL desktop dell
+#Demanda_electricoA <-read.csv("C:\\Users\\Sergio\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
+#URL HPi3
+Demanda_electricoA <-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
+```
+
+Comprobemos que el documento Demanda_electrico se haya importado correctamente
+
+```{r}
+head(Demanda_electricoA)
+summary(Demanda_electricoA)
+typeof(Demanda_electricoA)
+dim(Demanda_electricoA)
+```
+
+AGREGAMOS UNA NUEVA COLUMNA en un tipo de formato de fecha
+Demanda_electricoA es de tipo lista con dimensiones 214x3
+```{r}
+Demanda_electricoA$as.date = as.Date(Demanda_electricoA$Date, format = "%m/%d/%Y")
+head(Demanda_electricoA)
+tail(Demanda_electricoA)
+typeof(Demanda_electricoA)
+dim(Demanda_electricoA)
+
+```
+
+
+Guardemos en variables los días min y max para poder usar en funcion ts 
+```{r}
+typeof(Demanda_electricoA$as.date)
+min_date = min(Demanda_electricoA$as.date, na.rm = T)
+min_date
+max_date =max(Demanda_electricoA$as.date, na.rm = T)
+max_date
+min_demanded_gas = min((Demanda_electricoA[, "Demanded_Gas"]), na.rm = T)
+min_demanded_gas
+```
+
+
+Usemos la funcion ts. de R para "hacer los datos de nuestra serie" un dato "tipo serie en R"
+En este caso de manera específca la columna de Demanded_gas
+
+TODO INDICA QUE AL HACER ESTE CAMBIO SE CAMBIA EL TIPO DE DATO PUES Demanda_electricoA es de tipo lista con dimensiones 214x3
+PERO Demanda_electricoA.ts es de tipo "double" con dimensiones NULL
+```{r}
+Demanda_electricoA.ts<- ts(Demanda_electricoA$Demanded_Gas, frequency = 12, start =c(2005,1), end =c(2022,8))
+head(Demanda_electricoA.ts)
+
+typeof(Demanda_electricoA.ts)
+dim(Demanda_electricoA.ts)
+```
+
+
+Grafica de la serie "ajustada a serie de tiempo"
+```{r}
+plot(Demanda_electricoA.ts, col = "red", main = "Demanda electrico 'original' ")
+
+```
+
+Agregando "suavizamiento con Moving Average usado la libreria forecast" -MA orden 3 y centrado-
+```{r}
+library(forecast)
+MA_m3_center <- forecast::ma(Demanda_electricoA.ts, order=3, centre = TRUE)
+MA_m3_center
+typeof(MA_m3_center)
+dim(MA_m3_center)
+```
+
+
+Ploteando la serie original vs MA_m3_center
+```{r}
+plot(Demanda_electricoA.ts, col = "red", main = "Demanda electrico 'original'vs MA_m3_center ")
+lines(MA_m3_center, col="blue")
+legend("bottomright", legend = c("Demanda electrico original", "Demanda electrico MA_m3_center"), col = c("red", "blue"), lty = 1)
+
+```
+
+
+
+
+Agregando "suavizamiento con Moving Average usado la libreria forecast"-MA orden 3 y NO centrado-
+(Primero tuvimos que definir la función movavg -https://github.com/cran/pracma/blob/master/R/movavg.R)
+```{r}
+
+movavg <- function(x, n, type=c("s", "t", "w", "m", "e", "r")) {
+    stopifnot(is.numeric(x), is.numeric(n), is.character(type))
+    if (length(n) != 1 || ceiling(n != floor(n)) || n <= 1)
+        stop("Window length 'n' must be a single integer greater 1.")
+    nx <- length(x)
+    if (n >= nx)
+        stop("Window length 'n' must be greater then length of time series.")
+    y <- numeric(nx)
+
+    type <- match.arg(type)
+    if (type == "s") {         # simple
+        for (k in 1:(n-1))  y[k] <- mean(x[1:k])
+        for (k in n:nx)     y[k] <- mean(x[(k-n+1):k])
+
+    } else if (type == "t") {  # triangular
+        n <- ceiling((n + 1)/2)
+        s <- movavg(x, n, "s")
+        y <- movavg(s, n, "s")
+
+    } else if (type == "w") {  # weighted
+        for (k in 1:(n-1))  y[k] <- 2 * sum((k:1)*x[k:1]) / (k*(k+1))
+        for (k in n:nx)     y[k] <- 2 * sum((n:1)*x[k:(k-n+1)]) / (n*(n+1))
+
+    } else if (type == "m") {  # modified
+        y[1] <- x[1]
+        for (k in 2:nx)     y[k] <- y[k-1] + (x[k] - y[k-1])/n
+
+    } else if (type == "e") {  # exponential
+        a <- 2/(n+1)
+        y[1] <- x[1]
+        for (k in 2:nx)     y[k] <- a*x[k] + (1-a)*y[k-1]
+
+    } else if (type == "r") {  # running
+        a <- 1/n
+        y[1] <- x[1]
+        for (k in 2:nx)     y[k] <- a*x[k] + (1-a)*y[k-1]
+
+    } else
+        stop("The type must be one of 's', 't', 'w', 'm', 'e', or 'r'.")
+
+    return(y)
+}
+```
+
+
+
+
+
+Agregando "suavizamiento con Moving Average usado la función movavg"-MA orden 3 y NO centrado-
+(En la función movavg se toman en cuenta solo los valores pasados y no los "futuros" es coo SI NO estuvierra centrado el cálculo)
+```{r}
+library(forecast)
+MA_m3_NOcenter <- movavg(Demanda_electricoA.ts, n=3, type="s")
+MA_m3_NOcenter
+typeof(MA_m3_NOcenter)
+dim(MA_m3_center)
+```
+
+
+
+Ploteando la serie original vs MA_m3_centervs MA_m3_NOcenter
+```{r}
+plot(Demanda_electricoA.ts, col = "red", main = "Demanda electrico 'original'vs MA_m3_center ")
+lines(MA_m3_center, col="blue")
+lines(MA_m3_NOcenter, col="green")
+legend("bottomright", legend = c("Demanda electrico original", "Demanda electrico MA_m3_center", "Demanda electrico MA_m3_NOcenter"), col = c("red", "blue", "green"), lty = 1)
+```
+
+
+Ahora recordemos que hemos estado teniendo porblemas para "fusionar" la "list" Demanda_electrico_importado
+y los double MA_3_Center &MA_3_Center_NOcenter pues indicaba el error que la data era de 213 rows y 
+lo que queramos incluir era de 2012. Entonces usams una "especie de placeholder" que indique que si no tiene un valor le ponga NA
+y asi poder "igualar la dim" de los "objetos a unir" 
+
+Intentemos transformar MA_3_Center a una con un placeholder 
+```{r}
+MA_m3_center_placeholder <- c(MA_m3_center, NA)
+MA_m3_center_placeholder
+
+```
+
+Intentemos transformar MA_3_Center_NOcenter a una con un placeholder 
+```{r}
+MA_m3_NOcenter_placeholder <- c(MA_m3_NOcenter, NA)
+MA_m3_NOcenter_placeholder
+
+```
+
+
+
+
+Ahora quiero agregar la variable MA_m3_center a la lista Demanda_electricoA -Me manda un cerror que Demanda_electricoA tiene 214 rows y MA_m3_center solo 212
+
+
+```{r}
+Demanda_electricoA$Demand_MA3_Center <- NA
+head(Demanda_electricoA$Demand_MA3_Center)
+dim(Demanda_electricoA$Demand_MA3_Center)
+dim(Demanda_electricoA)
+Demanda_electricoA$Demand_MA3_Center <- MA_m3_center_placeholder
+head(Demanda_electricoA$Demand_MA3_Center)
+head(Demanda_electricoA)
+typeof(Demanda_electricoA)
+dim(Demanda_electricoA)
+
+```
+
+Agregando la data MA_m3_NOcenter_placeholde a la tabla Demanda_electricoA como unanueva columna de nombre: Demand_MA3_NOCente
+
+```{r}
+Demanda_electricoA$Demand_MA3_NOCenter <- MA_m3_NOcenter_placeholder
+head(Demanda_electricoA$Demand_MA3_NOCenter)
+head(Demanda_electricoA)
+typeof(Demanda_electricoA)
+dim(Demanda_electricoA)
+tail(Demanda_electricoA)
+```
+
+Vamos a plotear los vamores de "Demanda electrico original", "Demanda electrico MA_m3_center", "Demanda electrico MA_m3_NOcenter"
+
+```{r}
+plot(x=Demanda_electricoA$as.date, y=Demanda_electricoA$Demanded_Gas, col = "red", main = "Demanda electrico 'original'vs MA_m3_center vs MA_m3_center", type="l")
+lines(x=Demanda_electricoA$as.date, y=Demanda_electricoA$Demand_MA3_Center, col="blue")
+lines(x=Demanda_electricoA$as.date, y=Demanda_electricoA$Demand_MA3_NOCenter, col="green")
+legend("bottomright", legend = c("Demanda electrico original", "Demanda electrico MA_m3_center", "Demanda electrico MA_m3_NOcenter"), col = c("red", "blue", "green"), lty = 1)
+```
+
+
+
+
+
+Agregando "suavizamiento con Moving Average AHORA WEIGHTED MOVING AVERAGE usado la libreria forecast"-WMA orden 3-
+```{r}
+library(forecast)
+WMA_m4 <- WMA(Demanda_electricoA.ts, n=4, wts=c(0.2,0.1,0.3,0.4))
+WMA_m4 
+typeof(WMA_m4 )
+dim(WMA_m4 )
+```
+
+
+
+
+Intentemos transformar WMA_m4 a una con un placeholder 
+```{r}
+WMA_m4_placeholder <- c(WMA_m4, NA)
+WMA_m4_placeholder
+
+```
+
+
+Agregando la data WMA_m4_placeholdera la tabla Demanda_electricoA como unanueva columna de nombre: Demanda_WMA_m4 
+
+```{r}
+Demanda_electricoA$Demanda_WMA_m4 <- WMA_m4_placeholder
+head(Demanda_electricoA$Demand_WMA_m4r)
+head(Demanda_electricoA)
+typeof(Demanda_electricoA)
+dim(Demanda_electricoA)
+tail(Demanda_electricoA)
+```
+
+
+
+
+Vamos a plotear los vamores de "Demanda electrico original", "Demanda electrico MA_m3_center", "Demanda electrico MA_m3_NOcenter", "Demanda electrico WA_ma"
+
+```{r}
+plot(x=Demanda_electricoA$as.date, y=Demanda_electricoA$Demanded_Gas, col = "red", main = "Demanda electrico 'original'vs MA_m3_center vs MA_m3_center, Demanda electrico WA_ma", type="l")
+lines(x=Demanda_electricoA$as.date, y=Demanda_electricoA$Demand_MA3_Center, col="blue")
+lines(x=Demanda_electricoA$as.date, y=Demanda_electricoA$Demand_MA3_NOCenter, col="green")
+lines(x=Demanda_electricoA$as.date, y=Demanda_electricoA$Demanda_WMA_m4, col="gold")
+legend("bottomright", legend = c("Demanda electrico original", "Demanda electrico MA_m3_center", "Demanda electrico MA_m3_NOcenter", "Demanda electrico WA_ma"), col = c("red", "blue", "green", "gold"), lty = 1)
+```
+
+Revisando la mean & standard deviation of the different MOVING AVERAGE calculations 
+
+```{r}
+
+print("Mean & sd of Demanded_Gas")
+mean(Demanda_electricoA$Demanded_Gas)
+sd(Demanda_electricoA$Demanded_Gas)
+
+print("Mean & sd of Demand_MA3_Center")
+mean(Demanda_electricoA$Demand_MA3_Center, na.rm = TRUE)
+sd(Demanda_electricoA$Demand_MA3_Center, na.rm = TRUE)
+
+
+print("Mean & sd of DDemand_MA3_NOCenter")
+mean(Demanda_electricoA$Demand_MA3_NOCenter, na.rm = TRUE)
+sd(Demanda_electricoA$Demand_MA3_NOCenter, na.rm = TRUE)
+
+
+
+print("Mean & sd of Demanda_WMA_m4")
+mean(Demanda_electricoA$Demanda_WMA_m4, na.rm = TRUE)
+sd(Demanda_electricoA$Demanda_WMA_m4, na.rm = TRUE)
+
+
+```
+
+
+Comparando los errores tipo MAPE entre los diferentes resultados que llevamos al momento 
+
+```{r}
+
+print("MAPE de Demanda_electrico vs MA_3_CENTER" )
+mape_Demanded_MA3_center <- mean(abs((Demanda_electricoA$Demanded_Gas - Demanda_electricoA$Demand_MA3_Center)/Demanda_electricoA$Demanded_Gas), na.rm = TRUE) * 100
+mape_Demanded_MA3_center
+
+
+print("MAPE de Demanda_electrico vs MA_3_NOCENTER" )
+mape_Demanded_MA3_NOcenter <- mean(abs((Demanda_electricoA$Demanded_Gas - Demanda_electricoA$Demand_MA3_NOCenter)/Demanda_electricoA$Demanded_Gas), na.rm = TRUE) * 100
+mape_Demanded_MA3_NOcenter 
+
+
+print("MAPE de Demanda_electrico vs WA_4" )
+mape_Demanded_WA4 <- mean(abs((Demanda_electricoA$Demanded_Gas - Demanda_electricoA$Demanda_WMA_m4)/Demanda_electricoA$Demanded_Gas), na.rm = TRUE) * 100
+mape_Demanded_WA4 
+
+```
+
+
+
+```{r}
+
+```
+
+
+
+

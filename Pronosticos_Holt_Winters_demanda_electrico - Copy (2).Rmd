@@ -1,0 +1,495 @@
+---
+title: "Pronosticos_Holt_Winters_demanda_electrico"
+author: "Sergi"
+date: "2023-02-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+## APLICATION OF SMOTHING METHODS IN R  
+
+```{r}
+
+library(tidyverse)      # data manipulation and visualization
+library(lubridate)      # easily work with dates and times
+library(fpp2)           # working with time series data
+library(zoo)
+library(ggplot2)
+library(plyr)
+library(dplyr)
+library(knitr)
+library(TTR)
+library(hydroGOF)
+
+
+```
+
+
+
+We first import our data 
+```{r}
+#URL HPi5
+#Demanda_electrico_importado<-read.csv("C:\\Users\\llell\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM_HPi5\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
+#URL HPi3
+Demanda_electrico_importado<-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
+```
+
+
+We checked the importing has worked 
+```{r}
+head(Demanda_electrico_importado)
+summary(Demanda_electrico_importado)
+typeof(Demanda_electrico_importado)
+dim(Demanda_electrico_importado)
+```
+
+
+
+We add a new columns in a data type of data by transforming our 'original' Date columns into an as.date column 
+
+```{r}
+Demanda_electrico_importado$as.date <- as.Date(Demanda_electrico_importado$Date, format = "%m/%d/%Y")
+head(Demanda_electrico_importado)
+tail(Demanda_electrico_importado)
+typeof(Demanda_electrico_importado)
+dim(Demanda_electrico_importado)
+
+```
+
+
+#### To be able to use HoltWinters Methond in R, our data must be in a 'time series' type of data, time series methods come from the forecast library
+
+
+```{r}
+Demanda_electrico_importado.ts<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1), end =c(2022,8))
+head(Demanda_electrico_importado.ts)
+
+typeof(Demanda_electrico_importado.ts)
+dim(Demanda_electrico_importado.ts)
+```
+
+
+Then we plot the 'original demanded gas in electric time series'
+```{r}
+plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'original' ")
+
+```
+
+
+
+
+## Methods for Exponential smoothing in time series 
+
+The idea behind: Forecast future values using a weighted average of all previous values in the series. 
+Also with the idea that the weight associated with the previous values, decline over time
+
+
+## Nonseasonal Methods
+
+### Simple Exponential smoothing (SES)
+
+Source https://www.youtube.com/watch?v=Fqge2HDH2Co
+
+FOR SERIRES WITH NO TREND AND NO SEASONALITY
+
+Weights all of the past data with exponentially decreasing weights going into the past. In other words, usually the more recent data has greater weight.
+ 
+
+Single exponential smoothing has one parameter 'alpha': The controlling smoothing factor for a particular level alpha (a) is the smoothing constant. The value of alpha can be any number between 0 and 1, not inclusive.  where the larger values of the predictive model mean it focuses on last observations, and the smaller values focus on history. Learning is fastest at one and slowest at zero values of alpha.
+Alpha  controls the exponential decay influencing rate of past observations.
+
+
+
+The next value $\hat{Y}_{t} :$ at time t is estimated as the 'level of the series at time t-1': 
+
+$$\hat{Y}_{t} = l_{t-1}$$
+Where: 
+$\hat{Y}_{t} :$ Forecast for time t
+$l_{t-1} :$ Level at time t-1
+
+And, the weight of each and every parameter is always determined by alpha value described below: 
+
+$$l_{t-1} = \alpha * y_{y} + (1-\alpha )*l_{t-2}$$
+
+Where: 
+$y_{y} :$ 'Known' value at time t 
+$l_{t-2} :$ Level at time t-2
+$\alpha :$ Smoothing factor 
+
+
+
+
+### Replication of Simple Exponential Smoothing (SES) in R (https://www.geeksforgeeks.org/exponential-smoothing-in-r-programming/)
+
+In R, the prerequisites of this analysis will be installing the required packages. We need to install the following two packages using the install.packages() command from the R console:
+
+fpp2 (with which the forecast package will be automatically loaded)
+tidyverse
+
+
+
+Then we are able to apply the SES method in R  
+
+```{r}
+Demanda_electrico_SES <- ses(Demanda_electrico_importado.ts, alpha=0.2)
+head(Demanda_electrico_SES)
+tail(Demanda_electrico_SES)
+typeof(Demanda_electrico_SES)
+```
+
+Let´s see only the SMOTHED VALUES
+```{r}
+Smoothed_values_Demanda_electrico_SES <- Demanda_electrico_SES$x
+Smoothed_values_Demanda_electrico_SES
+head(Smoothed_values_Demanda_electrico_SES)
+tail(Smoothed_values_Demanda_electrico_SES)
+typeof(Smoothed_values_Demanda_electrico_SES)
+dim(Smoothed_values_Demanda_electrico_SES)
+
+```
+
+
+SMOOTHED VALUS ARE EQUAL THAN ORIGINAL ONES
+```{r}
+plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'original' ")
+lines(Smoothed_values_Demanda_electrico_SES , col='purple')
+```
+
+
+
+
+LEt´s plot the forecast
+```{r}
+plot(Demanda_electrico_SES)
+
+```
+
+
+
+Let´s see the forecast for next year´s gas use in electric sector
+
+```{r}
+Demanda_electrico_SES_forecast <- Demanda_electrico_SES$mean
+Demanda_electrico_SES_forecast
+head(Demanda_electrico_SES_forecast)
+tail(Demanda_electrico_SES_forecast)
+typeof(Demanda_electrico_SES_forecast)
+dim(Demanda_electrico_SES_forecast)
+```
+
+Let´s plot the forecast generated by SES R model 
+
+```{r}
+plot(Demanda_electrico_SES_forecast)
+```
+
+
+Let´s try to find an 'optimal alpha'
+
+```{r}
+# comparing our model
+alpha <- seq(.01, .99, by = .01)
+RMSE <- NA
+for(i in seq_along(alpha)) {
+  fit <- ses(Demanda_electrico_importado.ts, alpha = alpha[i],
+             h = 100)
+  RMSE[i] <- accuracy(fit)
+}
+ 
+# convert to a data frame and
+# identify min alpha value
+alpha.fit <- data_frame(alpha, RMSE)
+alpha.min <- filter(alpha.fit,
+                    RMSE == min(RMSE))
+ 
+# plot RMSE vs. alpha
+ggplot(alpha.fit, aes(alpha, RMSE)) +
+  geom_line() +
+  geom_point(data = alpha.min,
+             aes(alpha, RMSE),
+             size = 2, color = "red")
+
+```
+
+
+
+
+Let´s forecast next year´s gas use in electric sector USING THE FORECAST METHOD!!
+
+```{r}
+Demanda_electrico_forecast_con_datos_SES <-forecast(Demanda_electrico_SES)
+head(Demanda_electrico_forecast_con_datos_SES)
+tail(Demanda_electrico_forecast_con_datos_SES)
+typeof(Demanda_electrico_forecast_con_datos_SES)
+
+```
+
+
+Let's plot the forecast USING THE FORECAST METHOD NOT explicitely the SES method 
+
+```{r}
+plot(Demanda_electrico_forecast_con_datos_SES)
+
+```
+
+
+Let's see the error metrics of the forecast USING THE FORECAST METHOD!!
+
+```{r}
+accuracy(Demanda_electrico_forecast_con_datos_SES)
+
+```
+
+
+
+Let´s plot original serie vs the forecast USING THE FORECAST METHOD!!
+
+```{r}
+#plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'original'vs Holt-Winters ")
+#lines(Demanda_electrico_forecast_con_datos_SES, col="blue")
+#legend("bottomright", legend = c("Demanda electrico original", "Demanda_electrico_forecast_con_datos_SES"), col = c("red", "blue"), lty = 1)
+
+```
+
+
+
+### Double Exponential smoothing (DES) or Holt´s Methods 
+Source :https://docs.oracle.com/cd/E57185_01/CBPPU/classic_nonseasonal_forecasting_method_parameters.htm
+
+FOR SERIRES WITH  TREND BUT NO SEASONALITY
+
+Double exponential smoothing has two parameters: alpha and beta.  
+
+The controlling smoothing factor for a particular level denoted by (a) alpha and the additional factor for smoothing and decay control of trend changes denoted by (b) or beta. The trends can change additionally if the trend is linear and manipulatively when the trend is exponential.
+
+
+
+The next value $\hat{Y}_{t} :$ at time t is estimated as the 'level of the series at time t-1' plus a trend component: 
+
+$$\hat{Y}_{t} = l_{t-1} + (h)T_{t-1}$$
+Where: 
+$\hat{Y}_{t} :$ Forecast for time t
+$l_{t-1} :$ Level at time t-1
+$(h)T_{t} :$ Trend component
+
+So, the first term of the sum is:  
+
+$$l_{t-1} = \alpha * y_{y} + (1-\alpha )*(l_{t-2} +T_{t-2}) $$
+
+Where: 
+$y_{y} :$ 'Known' value at time t 
+$l_{t-2} :$ Level at time t-2
+$\alpha :$ Smoothing factor 
+$T_{t-1}:$ Trend factor at time t-2
+
+
+And the second term of the sum is:
+
+$$T_{t-1} = \beta * (l_{t-1} - l_{t-2}) + (1-\beta )*(T_{t-2}) $$
+
+Where: 
+$T_{t} Trend factor at time t 
+$l_{t-2} :$ Level at time t-2
+$\beta :$ Factor for smoothing and decay control of trend changes denoted 
+$l_{t-1} :$ Level at time t-1
+$l_{t-2} :$ Level at time t-2
+$T_{t-2}:$ Trend factor at time t-2
+
+
+
+
+
+### Replication of Double Exponential Smoothing or Holt´s method in R (https://www.geeksforgeeks.org/exponential-smoothing-in-r-programming/)
+
+In R, to apply the Holt’s Method we are going to use the holt() function
+
+
+
+```{r}
+Demanda_electrico_Holt <- holt(Demanda_electrico_importado.ts)
+head(Demanda_electrico_Holt)
+tail(Demanda_electrico_Holt)
+typeof(Demanda_electrico_Holt)
+```
+
+Let´s see only the SMOTHED VALUES
+```{r}
+Smoothed_values_Demanda_electrico_Holt <- Demanda_electrico_SES$x
+Smoothed_values_Demanda_electrico_Holt
+head(Smoothed_values_Demanda_electrico_Holt)
+tail(Smoothed_values_Demanda_electrico_Holt)
+typeof(Smoothed_values_Demanda_electrico_Holt)
+dim(Smoothed_values_Demanda_electrico_Holt)
+
+```
+
+
+SMOOTHED VALUS ARE EQUAL THAN ORIGINAL ONES
+```{r}
+plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'original' ")
+lines(Smoothed_values_Demanda_electrico_Holt , col='purple')
+```
+
+
+
+LEt´s plot the forecast
+```{r}
+plot(Demanda_electrico_Holt$mean)
+
+```
+
+
+
+Let´s see the forecast for next year´s gas use in electric sector
+
+```{r}
+Demanda_electrico_Holt_forecast <- Demanda_electrico_Holt$mean
+Demanda_electrico_Holt_forecast
+head(Demanda_electrico_Holt_forecast)
+tail(Demanda_electrico_Holt_forecast)
+typeof(Demanda_electrico_Holt_forecast)
+dim(Demanda_electrico_Holt_forecast)
+```
+
+
+Let´s plot the forecast generated by SES R model 
+
+```{r}
+plot(Demanda_electrico_Holt)
+```
+
+
+
+## Seasonal Methods
+
+### Holt-Winters
+
+Source: https://docs.oracle.com/cd/E57185_01/CBPPU/holt-winters_additive.htm
+
+
+#### Holt-Winters additive 
+
+Is an extension of Holt's exponential smoothing that captures seasonality. This method produces exponentially smoothed values for the level of the forecast, the trend of the forecast, and the seasonal adjustment to the forecast. This seasonal additive method adds the seasonality factor to the trended forecast, producing the Holt-Winters’ additive forecast.
+
+This method is best for data with trend and seasonality that does not increase over time. It results in a curved forecast that shows the seasonal changes in the data.
+
+https://otexts.com/fpp2/holt-winters.html
+
+
+$$\begin{align*}
+  \hat{y}_{t+h|t} &= \ell_{t} + hb_{t} + s_{t+h-m(k+1)} \\
+  \ell_{t} &= \alpha(y_{t} - s_{t-m}) + (1 - \alpha)(\ell_{t-1} + b_{t-1})\\
+  b_{t} &= \beta^*(\ell_{t} - \ell_{t-1}) + (1 - \beta^*)b_{t-1}\\
+  s_{t} &= \gamma (y_{t}-\ell_{t-1}-b_{t-1}) + (1-\gamma)s_{t-m},
+\end{align*}$$
+
+The equation for the seasonal component is often expressed as
+
+$$s_{t} = \gamma^* (y_{t}-\ell_{t})+ (1-\gamma^*)s_{t-m}$$
+If we substitute  ℓt  from the smoothing equation for the level of the component form above, we get
+
+$$s_{t} = \gamma^*(1-\alpha) (y_{t}-\ell_{t-1}-b_{t-1})+ [1-\gamma^*(1-\alpha)]s_{t-m}$$
+
+
+#### Holt-Winters multiplicative 
+
+Is similar to the Holt-Winters’ additive method. Holt-Winters’ Multiplicative method also calculates exponentially smoothed values for level, trend, and seasonal adjustment to the forecast. This seasonal multiplicative method multiplies the trended forecast by the seasonality, producing the Holt-Winters’ multiplicative forecast.
+
+This method is best for data with trend and with seasonality that increases over time. It results in a curved forecast that reproduces the seasonal changes in the data.
+
+$$\begin{align*}
+  \hat{y}_{t+h|t} &= (\ell_{t} + hb_{t})s_{t+h-m(k+1)} \\
+  \ell_{t} &= \alpha \frac{y_{t}}{s_{t-m}} + (1 - \alpha)(\ell_{t-1} + b_{t-1})\\
+  b_{t} &= \beta^*(\ell_{t}-\ell_{t-1}) + (1 - \beta^*)b_{t-1}                \\
+  s_{t} &= \gamma \frac{y_{t}}{(\ell_{t-1} + b_{t-1})} + (1 - \gamma)s_{t-m}
+\end{align*}$$
+
+
+## Classic Seasonal Forecasting Method Parameters
+
+
+Source: https://docs.oracle.com/cd/E57185_01/CBPPU/classic_seasonal_forecasting_method_parameters.htm
+
+
+The seasonal forecast methods use the following parameters:
+
+alpha (α) — Smoothing parameter for the level component of the forecast. The value of alpha can be any number between 0 and 1, not inclusive.
+
+beta (β) — Smoothing parameter for the trend component of the forecast. The value of beta can be any number between 0 and 1, not inclusive.
+
+gamma (γ) — Smoothing parameter for the seasonality component of the forecast. The value of gamma can be any number between 0 and 1, not inclusive.
+
+phi (Φ) — Damping parameter; any number between 0 and 1, not inclusive.
+
+
+
+
+
+
+### Replication of  Holt Winter´s method in R
+
+Then we are able to apply the HoltWinters method 
+
+```{r}
+Demanda_electrico_HW <- HoltWinters(Demanda_electrico_importado.ts)
+head(Demanda_electrico_HW)
+tail(Demanda_electrico_HW)
+typeof(Demanda_electrico_HW)
+```
+
+
+Let´s see only the SMOTHED VALUES
+```{r}
+Smoothed_values_Demanda_electrico_HW <- Demanda_electrico_HW$x
+Smoothed_values_Demanda_electrico_HW
+head(Smoothed_values_Demanda_electrico_HW)
+tail(Smoothed_values_Demanda_electrico_HW)
+typeof(Smoothed_values_Demanda_electrico_HW)
+dim(Smoothed_values_Demanda_electrico_HW)
+
+```
+
+
+SMOOTHED VALUS ARE EQUAL THAN ORIGINAL ONES
+```{r}
+plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'original' ")
+lines(Smoothed_values_Demanda_electrico_HW , col='purple')
+```
+
+
+
+LEt´s plot the forecast
+```{r}
+#plot(Demanda_electrico_HW$mean)
+
+```
+
+
+
+Let´s see the forecast for next year´s gas use in electric sector
+
+```{r}
+Demanda_electrico_HW_forecast <- Demanda_electrico_HW$mean
+Demanda_electrico_HW_forecast
+head(Demanda_electrico_HW_forecast)
+tail(Demanda_electrico_HW_forecast)
+typeof(Demanda_electrico_HW_forecast)
+dim(Demanda_electrico_HW_forecast)
+```
+
+
+Let´s plot the forecast generated by HoltWinters model in  R 
+
+```{r}
+plot(Demanda_electrico_HW)
+```
+
+
+
