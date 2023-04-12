@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 
-## APLICATION OF SMOTHING METHODS IN R  
+## Aplicación de métodos de pronóstico vistos al momento  
 
 ```{r}
 
@@ -87,7 +87,7 @@ plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'ori
 ```{r}
 #Código para descomponer series y ver cada mes por separado 
 
-par(mfrow=c(3,2))
+par(mfrow=c(3,4))
 
 mes=c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
 
@@ -95,12 +95,12 @@ for (j in 1:12)
 {
   
   bp=window(Demanda_electrico_importado.ts,start=c(2005,j), deltat=1)
-  plot(bp, main=paste("mes",mes[j]),type="o",ylim=c(0,5000))
+  plot(bp, main=paste("mes",mes[j]),type="o",ylim=c(1000,4000))
   
 }
 j=12
 bp=window(Demanda_electrico_importado.ts,start=c(2005,j), deltat=1)
-plot(bp, main=paste("mes",mes[j]),type="o",ylim=c(0,5000))
+plot(bp, main=paste("mes",mes[j]),type="o",ylim=c(1000,4000))
 
 
 tiempo=c(1:213)
@@ -118,6 +118,31 @@ plot(bp, type="o")
 bp
 
 ```
+
+
+```{r}
+par(mfrow=c(3,2))
+
+mes=c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
+
+for (j in 1:12) {
+  
+  bp <- window(Demanda_electrico_importado.ts, start=c(2005, j), deltat=1)
+  tiempo <- 1:length(bp)  # Create a new tiempo vector with the length of bp
+  
+  plot(bp, main=paste("mes",mes[j]), type="o", ylim=c(0,5000))
+  
+  ajuste1 <- lm(bp ~ 1 + tiempo)  # Fit the linear model using bp and tiempo
+  summary(ajuste1)
+  plot(ajuste1)
+  serie <- data.frame(tiempo, bp)
+  rownames(serie) <- NULL  # Remove the row names from the data frame
+  
+}
+
+
+```
+
 
 
 
@@ -172,7 +197,8 @@ Demanda_electrico_SIN_Sea_NI_Trend <- Demanda_electrico_SINSeason - Demanda_elec
 Demanda_electrico_SIN_Sea_NI_Trend
 plot.ts(Demanda_electrico_SIN_Sea_NI_Trend, main = "Demanda electrico sin componente season ni componente trend", col="violet")
 ```
-
+[Si se quiesera hace run pronóstico a partir de aqui debería "regresar la tendencia y la estacionalidad" para 
+tener de nuevo los valores en la escala correcta]
 
 ```{r}
 
@@ -247,6 +273,7 @@ plot(Demanda_electrico_HW_forecast)
 ```
 
 
+Los ultimos publicaods por la SIE de 2022
 ```{r}
 valores_reales_electrico <-c(3260,3010, 3063)
 ```
@@ -269,6 +296,65 @@ cat("The RMSE is:", round(rmse,2),"\n")
 
 
 ### Ahora intentemos ajustar un modelo lineal de la Demanda de gas natural en el sector electrico en función de la Temperatura 
+
+```{r}
+head(Demanda_electrico)
+```
+```{r}
+dim(Demanda_electrico)
+```
+
+```{r}
+tend <- c(1:213)
+
+mes=c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
+
+rep_mes <- rep(mes,17)
+rep_mes
+
+rep_mes <-rep_mes[1:213] 
+rep_mes
+
+Demanda_electrico_frame <- data.frame(Demanda_electrico,rep_mes,tend)
+Demanda_electrico_frame
+
+```
+
+```{r}
+ajuste_electrico <- lm (Demanded_Gas~1 + rep_mes + tend, data=Demanda_electrico_frame)
+ajuste_electrico
+```
+```{r}
+summary(ajuste_electrico)
+```
+
+```{r}
+Demanded_gas <-c(3260,3010, 3063)
+rep_mes <- c("sep", "oct", "nov")
+tend <- c(214:216) 
+
+predict_frame <- data.frame(Demanded_gas,rep_mes,tend )
+predict_frame
+```
+```{r}
+prediccion_electrico <- predict(ajuste_electrico,predict_frame, se.fit = TRUE )
+prediccion_electrico
+```
+
+```{r}
+valores_calculados_electrico2 <- prediccion_electrico$fit
+
+# Calculate MAPE
+mape_electrico_lm <- mean(abs((valores_reales_electrico - valores_calculados_electrico2) / valores_reales_electrico)) * 100
+cat("The MAPE is:", round(mape,2),"%\n")
+
+# Calculate RMSE
+rmse_electrico_lm <- sqrt(mean((valores_reales_electrico - valores_calculados_electrico2)^2))
+cat("The RMSE is:", round(rmse,2),"\n")
+```
+
+
+
 
 Importamos la data historica del clima 
 ```{r}
@@ -559,6 +645,38 @@ typeof(Demanda_residencial_importado.ts)
 dim(Demanda_residencial_importado.ts)
 ```
 
+```{r}
+head(Demanda_residencial_importado)
+
+demanded_residencial_pre_pandemia <- Demanda_residencial_importado$Demanded_Gas[1:175]
+demanded_residencial_pre_pandemia
+
+date_residencial_pre_pandemia <- Demanda_residencial_importado$as.date[1:175]
+date_residencial_pre_pandemia 
+
+
+```
+
+
+
+```{r}
+residencal_pre_pandemia_frame <- data.frame(demanded_residencial_pre_pandemia, date_residencial_pre_pandemia)
+head(residencal_pre_pandemia_frame)
+
+tail(residencal_pre_pandemia_frame)
+```
+
+```{r}
+Demanda_residencial_importado_pre.ts<- ts(residencal_pre_pandemia_frame$demanded_residencial_pre_pandemia, frequency = 12, start =c(2005,1))
+
+
+typeof(Demanda_residencial_importado_pre.ts)
+dim(Demanda_residencial_importado_pre.ts)
+plot(Demanda_residencial_importado_pre.ts)
+```
+
+
+
 
 Then we plot the 'original demanded gas in electric time series'
 ```{r}
@@ -568,11 +686,10 @@ plot(Demanda_residencial_importado.ts, col = "violet", main = "Demanda residenci
 
 
 
-
 ```{r}
 #Código para descomponer series y ver cada mes por separado 
 
-par(mfrow=c(3,2))
+par(mfrow=c(3,4))
 
 mes=c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
 

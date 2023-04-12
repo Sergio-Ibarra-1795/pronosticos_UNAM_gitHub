@@ -1,0 +1,244 @@
+---
+title: "Pronosticos_Class_11_Abril_Modelos_Lineales_Generalizados"
+author: "Sergi"
+date: "2023-02-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## Aplicación de métodos de pronóstico vistos al momento  
+
+```{r}
+
+library(tidyverse)      # data manipulation and visualization
+library(lubridate)      # easily work with dates and times
+library(fpp2)           # working with time series data
+library(zoo)
+library(ggplot2)
+library(plyr)
+library(dplyr)
+library(knitr)
+library(TTR)
+library(hydroGOF)
+
+
+```
+
+
+### Ejemplo de serie trigonometrica 
+
+We first import our data 
+```{r}
+
+VRL<- c(189,229,249,289,260,431,660,777,915,613,485,277,244,296,319,370,313,336,831,960,1152,759,607,371,298,378,373,443,374,660,1004,1153,1388,904,715,441)
+```
+
+
+```{r}
+VRLT<- ts(VRL, frequency=12, start(2010,1))
+plot(VRLT)
+```
+
+
+```{r}
+##Construimos un vector para la tendencia 
+
+tm<- c(1:36)
+
+VRLT_Frame <- data.frame(tm,VRLT )
+VRLT_Frame
+
+```
+
+
+
+## Ejmeplo de modelo Lineal generalizado 
+
+1. Asociación de variables de abundancia 
+
+
+```{r}
+MFAVariablesAbundancia <- read.csv("MFAVariablesAbundancia.csv")
+MFAVariablesAbundancia
+```
+
+```{r}
+install.packages("pscl")
+
+library(pscl)
+
+```
+
+```{r}
+summary(MFAVariablesAbundancia)
+```
+
+Los valores de train, serán todos los rows + las columnas de la 2 a la 10
+```{r}
+train = MFAVariablesAbundancia[,2:10]
+head(train)
+```
+
+
+```{r}
+cor(train)
+```
+
+
+
+#### Aplicación del glm
+
+Aqui se presenta un ejemplo de modelo de glm para pronosticar la variable abundancia 
+
+```{r}
+glm_abundance<- glm(Abundance~Water.temperature+Altitude+Distance.above.the.ground,
+         family=poisson(link = log),train)
+
+
+```
+
+
+```{r}
+summary(glm_abundance)
+```
+
+
+Se usa la función pr2 o pseudor R como otro critrio 
+```{r}
+pR2(glm_abundance)[[4]]
+```
+
+
+
+Intento de otro glm para bundancia (Incluyendo variables distintas a las originalmente usadas por el profe para predecir abundancia)
+ 
+```{r}
+glm_abundance2<- glm(Abundance~Water.temperature+Altitude+Distance.above.the.ground + Water.pH,
+         family=poisson(link = log),train)
+
+```
+
+
+
+```{r}
+summary(glm_abundance2)
+```
+
+```{r}
+train2 <- MFAVariablesAbundancia[1:55,2:10]
+head(train2)
+```
+
+
+```{r}
+test2 <- MFAVariablesAbundancia[56:60,2:10]
+head(test2)
+```
+
+
+Aplicación del modelo 1 al train2
+
+```{r}
+glm_abundance_mod1<- glm(Abundance~Water.temperature+Altitude+Distance.above.the.ground,
+         family=poisson(link = log),train2)
+
+summary(glm_abundance_mod1)
+```
+
+Predicción de los valores con el modelo 1
+
+```{r}
+predicion_con_modelo1<- predict(glm_abundance_mod1, newdata = test2, type="response")
+predicion_con_modelo1
+```
+
+
+Cálculo del MAPE con el modelo 1 
+
+Se construye el vector de datos reales
+```{r}
+abundancia_Reales_5Ultimos <- MFAVariablesAbundancia[56:60,2]
+abundancia_Reales_5Ultimos
+```
+
+Ahora calculamos el MAPE del modelo 1 
+
+```{r}
+Mape_modelo_abundancia1 <- mean(abs((predicion_con_modelo1 - abundancia_Reales_5Ultimos) / abundancia_Reales_5Ultimos)) * 100
+Mape_modelo_abundancia1
+
+
+# Print the result
+cat("El MAPE del modelo1 de GLM para bundnacia  es:", round(Mape_modelo_abundancia1, 2), "%")
+
+```
+
+
+Calculando el MAPE sin considerar los ceros en abundancia_Reales_5Ultimos
+```{r}
+# filter out zero values from abundancia_Reales_5Ultimos
+abundancia_Reales_5Ultimos_no_zeros <- abundancia_Reales_5Ultimos[abundancia_Reales_5Ultimos != 0]
+
+# calculate the MAPE
+mape_modelo_abundancia1_no_zeros <- mean(abs((predicion_con_modelo1[abundancia_Reales_5Ultimos != 0] - abundancia_Reales_5Ultimos_no_zeros) / abundancia_Reales_5Ultimos_no_zeros)) * 100
+
+mape_modelo_abundancia1_no_zeros
+
+```
+
+
+
+Aplicación del modelo 2 al train2
+```{r}
+glm_abundance_mod2<- glm(Abundance~Water.temperature+Altitude+Distance.above.the.ground + Water.pH, family=poisson(link = log),train2)
+
+summary(glm_abundance_mod2)
+```
+
+Predicción de los valores con el modelo 2
+
+```{r}
+predicion_con_modelo2<- predict(glm_abundance_mod2, newdata = test2, type="response")
+predicion_con_modelo2
+```
+
+Se construye el vector de datos reales
+```{r}
+abundancia_Reales_5Ultimos <- MFAVariablesAbundancia[56:60,2]
+abundancia_Reales_5Ultimos
+```
+
+
+Ahora calculamos el MAPE del modelo 2 
+
+```{r}
+Mape_modelo_abundancia2 <- mean(abs((predicion_con_modelo2 - abundancia_Reales_5Ultimos) / abundancia_Reales_5Ultimos)) * 100
+Mape_modelo_abundancia2
+
+
+# Print the result
+cat("El MAPE del modelo1 de GLM para bundnacia  es:", round(Mape_modelo_abundancia2, 2), "%")
+
+```
+
+
+Calculando el MAPE sin considerar los ceros en abundancia_Reales_5Ultimos
+```{r}
+# filter out zero values from abundancia_Reales_5Ultimos
+abundancia_Reales_5Ultimos_no_zeros <- abundancia_Reales_5Ultimos[abundancia_Reales_5Ultimos != 0]
+
+# calculate the MAPE
+mape_modelo_abundancia2_no_zeros <- mean(abs((predicion_con_modelo2[abundancia_Reales_5Ultimos != 0] - abundancia_Reales_5Ultimos_no_zeros) / abundancia_Reales_5Ultimos_no_zeros)) * 100
+
+mape_modelo_abundancia2_no_zeros
+
+```
+
+
+
+

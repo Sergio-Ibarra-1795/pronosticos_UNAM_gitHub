@@ -1,0 +1,80 @@
+---
+title: "Pronosticos_Class_11_Abril"
+author: "Sergi"
+date: "2023-02-27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## Aplicación de métodos de pronóstico vistos al momento  
+
+```{r}
+
+library(tidyverse)      # data manipulation and visualization
+library(lubridate)      # easily work with dates and times
+library(fpp2)           # working with time series data
+library(zoo)
+library(ggplot2)
+library(plyr)
+library(dplyr)
+library(knitr)
+library(TTR)
+library(hydroGOF)
+
+
+```
+
+
+### Ejemplo de serie trigonometrica 
+
+We first import our data 
+```{r}
+
+VRL<- c(189,229,249,289,260,431,660,777,915,613,485,277,244,296,319,370,313,336,831,960,1152,759,607,371,298,378,373,443,374,660,1004,1153,1388,904,715,441)
+```
+
+
+```{r}
+VRLT<- ts(VRL, frequency=12, start(2010,1))
+plot(VRLT)
+```
+
+
+```{r}
+##Construimos un vector para la tendencia 
+
+tm<- c(1:36)
+
+VRLT_Frame <- data.frame(tm,VRLT )
+VRLT_Frame
+
+```
+
+
+
+## Ejmeplo de modelo Lineal generalizado 
+
+1. Asociación de variables de abundancia 
+
+
+```{r}
+MFAVariablesAbundancia <- read.csv("MFAVariablesAbundancia.csv")
+MFAVariablesAbundancia
+```
+
+```{r}
+install.packages("pscl")
+
+library(pscl)
+
+```
+
+
+
+
+
