@@ -162,12 +162,10 @@ prediccionDefochile3_Round <- round(prediccionDefochile3,0)
 
 
 
-
 #### % De acierto de predicciones 
 ```{r}
 100*(1-(sum(abs(prediccionDefochile3_Round-testDefoChile$Defores))/length(prediccionDefochile3_Round)))
 ```
-
 
 
 
@@ -199,6 +197,9 @@ summary(glm_semillas1)
 pR2(glm_semillas1)
 ```
 
+```{r}
+plot(glm_semillas1)
+```
 
 
 Se crean los datos de train y de test
@@ -235,12 +236,21 @@ print(paste0("MAPE: ", round(MAPE_semillas1, 2), "%"))
 ```
 
 
+#### Ejemplo de función gaussiana y link identity para modelación ejemplo de "Modelo lineal generalizado"
+Nota: identity  asume que el modelo normla "no necesita una transformación extra" como log, logit, etc y por lo tanto se usa identity que es como "no hacer esa transformación"
 ```{r}
 glm_semillaGaussian <- glm(Germinacion ~ Semillas + Luz + Agua, data= semillas, family = gaussian(link = "identity"))
 glm_semillaGaussian
 summary(glm_semillaGaussian)
+pR2(glm_semillaGaussian)
 ```
 
+
+NOTAR COMO SI SE ENCUENTRAN PATRONES en la sd-pearson.resid  que indican que propiamente NO ES UN ajuste GAUSIANO sino un Posion, por ejemplo 
+Recordar que la distnacia de hook busca POSIBLES OUTLIERS que se encuentren entre 1 y 0.5 de distancia de hook 
+```{r}
+plot(glm_semillaGaussian)
+```
 
 
 
@@ -267,5 +277,6 @@ print(paste0("MAPE: ", round(MAPE_semillasGaussian, 2), "%"))
 
 
 ```
+
 
 
