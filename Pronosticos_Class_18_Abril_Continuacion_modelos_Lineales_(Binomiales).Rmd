@@ -42,7 +42,7 @@ summary(pecesDatos)
 glm1 <- glm (Presencia ~ Precipitacion + Orden + Calidad_usos + Densidad_arroyos + Rios_montana + Sup.Tramo, data= pecesDatos, family=binomial(link=logit))
 glm1
 summary(glm1)
-pR2(glm1[4])
+pR2(glm1)
 ```
 
 
@@ -91,7 +91,7 @@ Notamos como las variables Dist.rio , Dist.ciudad,Dist.pueblo y Dist.carS presen
 glm_defoChile2 <- glm (Defores ~ Elev + Pendiente + Dist.carP + Dist.agri + Insolac, data= chilesDeforestacion, family=binomial(link=logit))
 glm_defoChile2
 summary(glm_defoChile2)
-pR2(glm_defoChile2[4])
+pR2(glm_defoChile2)
 ```
 
 
@@ -104,7 +104,7 @@ testDefoChile
 ```
 
 
-Uso de función predict con los datos de test 
+Uso de función predict con los datos de test y modelo glm_defoChile1
 
 ```{r}
 prediccionDefochile1 <- predict(glm_defoChile1, newdata = testDefoChile, type='response')
@@ -122,4 +122,150 @@ prediccionDefochile1_Round
 ```{r}
 100*(1-(sum(abs(prediccionDefochile1_Round-testDefoChile$Defores))/length(prediccionDefochile1_Round)))
 ```
+
+
+
+Uso de función predict con los datos de test y modelo glm_defoChile2
+
+```{r}
+prediccionDefochile2 <- predict(glm_defoChile2, newdata = testDefoChile, type='response')
+prediccionDefochile2
+```
+
+
+Como es variable binomial, redondeamos a uno o cero se´gun sea el caso 
+```{r}
+prediccionDefochile2_Round <- round(prediccionDefochile2,0)
+prediccionDefochile2_Round
+```
+
+#### % De acierto de predicciones 
+```{r}
+100*(1-(sum(abs(prediccionDefochile2_Round-testDefoChile$Defores))/length(prediccionDefochile2_Round)))
+```
+
+
+#### Intentemos un tercer modelo 
+
+```{r}
+glm_defoChile3 <- glm (Defores ~ Elev + Pendiente + Dist.rio + Dist.carP + Dist.agri + Insolac, data= chilesDeforestacion, family=binomial(link=logit))
+glm_defoChile3
+summary(glm_defoChile3)
+pR2(glm_defoChile3)
+```
+
+```{r}
+prediccionDefochile3 <- predict(glm_defoChile3, newdata = testDefoChile, type='response')
+prediccionDefochile3_Round <- round(prediccionDefochile3,0)
+
+```
+
+
+
+
+#### % De acierto de predicciones 
+```{r}
+100*(1-(sum(abs(prediccionDefochile3_Round-testDefoChile$Defores))/length(prediccionDefochile3_Round)))
+```
+
+
+
+
+
+## Sobre la aplicación de modelos de regresión lineal generalziados 
+
+
+### Ejemplo de germinaicon en semillas 
+```{r}
+semillas <- read.table("semillas.txt", header=TRUE)
+semillas
+
+```
+
+
+Nos aseguramos que las 'variables predictoras' no se encuentre 'altamente relacionadas' de manera lineal las unas con las otras 
+```{r}
+semillas <- semillas[,2:5]
+
+cor(semillas)
+```
+
+
+Aplicamos el modelo binomial, sobre todas las variables predictoras 'no fuertemente asociadas ' 
+```{r}
+glm_semillas1 <- glm (Germinacion ~ Semillas + Luz + Agua, data= semillas, family=poisson(link=log))
+glm_semillas1
+summary(glm_semillas1)
+pR2(glm_semillas1)
+```
+
+
+
+Se crean los datos de train y de test
+```{r}
+trainsemillas <-semillas[1:44,]
+trainsemillas
+testsemillas <-semillas[45:48,]
+testsemillas
+```
+
+
+Uso de función predict con los datos de test y modelo glm_defoChile1
+
+```{r}
+prediccionsemillas1 <- predict(glm_semillas1, newdata = testsemillas, type='response')
+prediccionsemillas1
+
+
+```
+
+
+MAPE de predición de semillas 
+```{r}
+
+testDEsemillas1 <- testsemillas$Germinacion
+
+# Calculate MAPE
+MAPE_semillas1 <- mean(abs((testDEsemillas1 - prediccionsemillas1) / testDEsemillas1)) * 100
+
+# Print MAPE
+print(paste0("MAPE: ", round(MAPE_semillas1, 2), "%"))
+
+
+```
+
+
+```{r}
+glm_semillaGaussian <- glm(Germinacion ~ Semillas + Luz + Agua, data= semillas, family = gaussian(link = "identity"))
+glm_semillaGaussian
+summary(glm_semillaGaussian)
+```
+
+
+
+
+Uso de función predict con los datos de test y modelo glm_semillaGaussian
+
+```{r}
+prediccionsemillasGaussian <- predict(glm_semillaGaussian, newdata = testsemillas, type='response')
+prediccionsemillasGaussian
+
+
+```
+
+
+MAPE de predición de semillas 
+```{r}
+
+testDEsemillas1 <- testsemillas$Germinacion
+
+# Calculate MAPE
+MAPE_semillasGaussian <- mean(abs((testDEsemillas1 - prediccionsemillasGaussian) / testDEsemillas1)) * 100
+
+# Print MAPE
+print(paste0("MAPE: ", round(MAPE_semillasGaussian, 2), "%"))
+
+
+```
+
 

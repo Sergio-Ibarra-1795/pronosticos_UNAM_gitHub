@@ -68,7 +68,7 @@ MFAVariablesAbundancia
 ```
 
 ```{r}
-#install.packages("pscl")
+install.packages("pscl")
 
 library(pscl)
 
@@ -138,6 +138,9 @@ head(train2)
 ```{r}
 test2 <- MFAVariablesAbundancia[56:60,2:10]
 head(test2)
+```
+```{r}
+cor(train2)
 ```
 
 
@@ -220,10 +223,16 @@ mape_modelo_abundancia2_no_zeros
 ```
 
 
+
 ```{r}
-install.packages("rsq")
-library(rsq)
-pr2(glm_abundance_mod2)
+pR2(glm_abundance_mod1)
+```
+
+
+```{r}
+#install.packages("rsq")
+#library(rsq)
+pR2(glm_abundance_mod2)
 ```
 
 
@@ -237,7 +246,7 @@ pr2(glm_abundance_mod2)
 
 ### Ejemplo de uso de binomial 
 
-
+Se debe de crear una variable que se llama abin_bin que sea 1 y cero 
 
 ```{r}
 glm_binomial = glm(abun_bin~1+Distance.above.the.ground, family=binomial(link=logit), abundancia)
