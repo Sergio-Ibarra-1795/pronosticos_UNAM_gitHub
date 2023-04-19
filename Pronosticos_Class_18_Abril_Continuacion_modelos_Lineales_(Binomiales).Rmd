@@ -1,0 +1,125 @@
+---
+title: "Pronosticos_Class_18_Abril_Continuacion_modelos_Lineales_(Binomiales)"
+author: "Sergibar"
+date: "2023-04-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Sobre la aplicación de modelos binomiales  de regresión lineal 
+
+
+### Ejemplo de presencia o no de peces en una sección de montaña 
+```{r}
+pecesDatos <- read.table("PecesDatos.txt", header=TRUE)
+pecesDatos
+```
+
+### La variable respuesta a modelar es la presencia o ausencia de la especie
+
+```{r}
+summary(pecesDatos)
+```
+
+
+Para las variables categoricas debemos asegurarnos que R las entienda y lea como variables categoricas
+```{r}
+pecesDatos$Orden <- as.factor(pecesDatos$Orden)
+```
+
+
+
+```{r}
+summary(pecesDatos)
+```
+
+
+
+```{r}
+glm1 <- glm (Presencia ~ Precipitacion + Orden + Calidad_usos + Densidad_arroyos + Rios_montana + Sup.Tramo, data= pecesDatos, family=binomial(link=logit))
+glm1
+summary(glm1)
+pR2(glm1[4])
+```
+
+
+
+Separamos en train y test 
+
+```{r}
+train <-pecesDatos[1:140]
+test <-pecesDatos[141:150]
+```
+
+
+
+
+### Ejemplo de deforestación o no en el caso del chile 
+
+Ejemplo de deforestación o no de una zona determinada 
+
+```{r}
+chilesDeforestacion <- read.table("DefoChile.txt", header=TRUE)
+chilesDeforestacion
+```
+
+Nos aseguramos que todas las variables, ya sea continuas o discretas (categoricas) estén siendo 'leidas interpretadas por R en la forma correcta '
+```{r}
+summary(chilesDeforestacion)
+```
+
+Nos aseguramos que las 'variables predictoras' no se encuentre 'altamente relacionadas' de manera lineal las unas con las otras 
+```{r}
+cor(chilesDeforestacion)
+```
+
+
+Aplicamos el modelo binomial, sobre todas las variables predictoras 'no fuertemente asociadas ' 
+```{r}
+glm_defoChile1 <- glm (Defores ~ Elev + Pendiente + Dist.rio + Dist.ciudad + Dist.pueblo + Dist.carP + Dist.carS + Dist.agri + Insolac, data= chilesDeforestacion, family=binomial(link=logit))
+glm_defoChile1
+summary(glm_defoChile1)
+pR2(glm_defoChile1[4])
+```
+
+Notamos como las variables Dist.rio , Dist.ciudad,Dist.pueblo y Dist.carS presentan un valor de p>0.05 y se deciden excluri del modelo 
+
+```{r}
+glm_defoChile2 <- glm (Defores ~ Elev + Pendiente + Dist.carP + Dist.agri + Insolac, data= chilesDeforestacion, family=binomial(link=logit))
+glm_defoChile2
+summary(glm_defoChile2)
+pR2(glm_defoChile2[4])
+```
+
+
+Se crean los datos de train y de test
+```{r}
+trainDefoChile <-chilesDeforestacion[1:1300,]
+trainDefoChile
+testDefoChile <-chilesDeforestacion[1301:1348,]
+testDefoChile
+```
+
+
+Uso de función predict con los datos de test 
+
+```{r}
+prediccionDefochile1 <- predict(glm_defoChile1, newdata = testDefoChile, type='response')
+prediccionDefochile1
+```
+
+
+Como es variable binomial, redondeamos a uno o cero se´gun sea el caso 
+```{r}
+prediccionDefochile1_Round <- round(prediccionDefochile1,0)
+prediccionDefochile1_Round
+```
+
+#### % De acierto de predicciones 
+```{r}
+100*(1-(sum(abs(prediccionDefochile1_Round-testDefoChile$Defores))/length(prediccionDefochile1_Round)))
+```
+
