@@ -1,0 +1,35 @@
+---
+title: "Pronosticos_Class_25_Abril_2023_Introduccion a conceptos de modelos ARMA"
+author: "Sergibar"
+date: "2023-04-25"
+output: html_document
+---
+
+
+## Introducicción a los conceptos de modelos ARMA para series de tiempo UNIVARIADAS
+
+
+### Ejemplo de autocorrelación con dara de Nile
+
+```{r}
+data("Nile")
+head(Nile)
+```
+
+
+```{r}
+Nile2 <-  ts(Nile, start =1871, end=1930)
+Nile2
+```
+
+
+```{r}
+
+plot(Nile2, type="o")
+
+acf(Nile2)
+
+```
+
+
+

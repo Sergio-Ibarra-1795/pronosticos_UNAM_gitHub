@@ -1,0 +1,81 @@
+---
+title: "Pronosticos_Class_25_Abril_2023_Introduccion a conceptos de modelos ARMA"
+author: "Sergibar"
+date: "2023-04-25"
+output: html_document
+---
+
+
+## Introducicción a los conceptos de modelos ARMA para series de tiempo UNIVARIADAS
+
+
+### Ejemplo de autocorrelación 1 con data de Nile
+
+```{r}
+data("Nile")
+head(Nile)
+```
+
+
+```{r}
+Nile2 <-  ts(Nile, start =1871, end=1930)
+Nile2
+```
+
+
+```{r}
+
+plot(Nile2, type="o")
+
+acf(Nile2)
+
+```
+
+
+
+### Ejemplo de autocorrelación 2 
+
+```{r}
+rainf =c(799,1174.8,865.1,1334.6,635.4,918.5,685.5,998.6,784.2,985,882.8,1071)
+rain.ts=ts(rainf,start = c(2012,1), frequency = 12)
+
+
+```
+
+
+
+```{r}
+par(mfrow=c(1,2))
+plot(rain.ts, type="o")
+acf(rain.ts)
+```
+
+
+
+### Ejemplo de autocorrelación 3 
+
+```{r}
+t <- seq(from=1, to =100, by =1) + 10 + rnorm(100, sd=7)
+plot(t)
+
+tquarter <- ts(t, start=c(2000,1), frequency=4)
+print(tquarter)
+
+```
+
+
+
+
+```{r}
+par(mfrow=c(1,2))
+plot(tquarter, type="o")
+acf(tquarter)
+
+```
+
+
+
+
+
+
+
