@@ -1,0 +1,199 @@
+---
+title: "Pronosticos_class_2_May_ARMA_to_my_data_part1_try2"
+author: "Sergibar"
+date: "2023-05-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Application of ARMA & ARIMA Models to my data 
+
+### The CF and ACF in the desicion of AR and MA significatn paratemers
+
+
+#### Empezemos con los datos de demanda_electrico 
+
+We first import our data 
+```{r}
+#URL HPi5
+#Demanda_electrico_importado<-read.csv("C:\\Users\\llell\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM_HPi5\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
+#URL HPi3
+Demanda_electrico_importado<-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
+```
+
+
+We checked the importing has worked 
+```{r}
+Demanda_electrico_importado
+head(Demanda_electrico_importado)
+tail(Demanda_electrico_importado)
+summary(Demanda_electrico_importado)
+typeof(Demanda_electrico_importado)
+dim(Demanda_electrico_importado)
+```
+
+```{r}
+# Convert first column to date format
+
+Demanda_electrico_importado$Date <- as.Date(Demanda_electrico_importado$Date, format = "%m/%d/%Y")
+
+# Check the data types of the columns
+str(Demanda_electrico_importado)
+Demanda_electrico_importado
+```
+
+
+Let´s see How it looks like time serie 
+
+```{r}
+Demanda_electrico_importado.ts<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1), end =c(2022,8))
+head(Demanda_electrico_importado.ts)
+
+typeof(Demanda_electrico_importado.ts)
+dim(Demanda_electrico_importado.ts)
+
+Demanda_electrico_importado.ts
+```
+
+
+Then we plot the 'original demanded gas in electric time series'
+```{r}
+plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'original' ")
+
+```
+
+
+#### Claculo de ACF & PACF para el caso de la data de demanda del sector eléctrico 
+
+```{r}
+#  ACF (Autocorrelation function)
+acf_demanda_electrico_tot <- acf(na.omit(Demanda_electrico_importado), lag.max = 100)
+acf_demanda_electrico_tot
+
+#  PACF (Partial Autocorrelation function)
+pacf_demanda_electrico_tot <- pacf(na.omit(Demanda_electrico_importado))
+pacf_demanda_electrico_tot
+```
+
+
+
+Note: In R, the pacf() function does not have a lag.max argument like the acf() function. Instead, the pacf() function computes the partial autocorrelation coefficients up to the maximum lag of the data by default. Therefore, we do not need to specify a lag.max parameter when calling the pacf() function.
+
+The lag.max parameter in the acf() function is used to specify the maximum lag at which to compute the autocorrelation coefficients. For example, setting lag.max = 10 would compute the autocorrelation coefficients up to a lag of 10. This parameter is optional and if not specified, it defaults to min(10, n-1) where n is the length of the input data.
+
+It is worth noting that in practice, the choice of lag.max depends on the characteristics of the time series data and the purpose of the analysis. For instance, if the time series data is known to have a seasonal pattern, we might want to set lag.max to a multiple of the seasonal frequency.
+
+
+
+
+
+#### Claculo de ACF & PACF para el caso de la data de demanda del sector eléctrico 
+
+```{r}
+acf_demanda_electrico <- Acf(Demanda_electrico_importado.ts, lag.max = 100, plot = FALSE, ci.type = "ma")
+acf_demanda_electrico
+
+
+pacf_demanda_electrico <- Pacf(Demanda_electrico_importado.ts, lag.max = 100, plot = FALSE, ci.type = "ma")
+pacf_demanda_electrico
+```
+
+
+
+```{r}
+library(forecast)
+
+# Compute ACF and PACF with ci.type
+acf_demanda_electrico <- Acf(Demanda_electrico_importado.ts, lag.max = 100, plot = FALSE, ci.type = "ma")
+pacf_demanda_electrico <- Pacf(Demanda_electrico_importado.ts, lag.max = 100, plot = FALSE, ci.type = "ma")
+
+# Plot ACF with significant lags only
+plot(acf_demanda_electrico$lag, acf_demanda_electrico$acf, type = "h", lwd = 2, xlab = "Lag", ylab = "ACF", ylim=c(-0.3,1), main = "Autocorrelation Function (ACF)")
+abline(h = c(0.2, -0.2), lty = 2, col = "red")
+
+# Plot PACF with significant lags only
+plot(pacf_demanda_electrico$lag, pacf_demanda_electrico$acf, type = "h", lwd = 2, xlab = "Lag", ylab = "PACF", ylim=c(-0.3,1), main = "Partial Autocorrelation Function (PACF)")
+abline(h = c(0.2, -0.2), lty = 2, col = "red")
+
+```
+
+#### BASED on PACF function we shoul start with an AR model with lags 1,2 or 5 
+
+##### Get training and testing sets 
+
+
+```{r}
+
+# Set the train and test end dates
+train_end <- as.Date("2018-12-01")
+test_end <- as.Date("2022-12-01")
+##This means we are taking from 2005 to 2018 as traning data to predict 2019 and 2020
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+Demanda_electrico_importado_train <- Demanda_electrico_importado[1:which(Demanda_electrico_importado$Date == train_end), ]
+Demanda_electrico_importado_train
+
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+Demanda_electrico_importado_test <- Demanda_electrico_importado[which(Demanda_electrico_importado$Date > train_end & Demanda_electrico_importado$Date <= test_end), ]
+Demanda_electrico_importado_test
+
+
+```
+
+
+
+```{r}
+library(forecast)
+
+# Fit the ARIMA model
+ARIMA_Demanda_electrico_12_0_10 <- Arima(Demanda_electrico_importado_train, order=c(12,0,10))
+
+# Print the model summary
+summary(ARIMA_Demanda_electrico_12_0_10)
+
+```
+
+
+```{r}
+# Assume Demanda_electrico_importado_train is a multivariate time series with the variable of interest in the second column
+# Convert the second column to a univariate time series
+ts_data_train_demanda_electrico <- ts(Demanda_electrico_importado_train[, 2], start = c(2005, 1), frequency = 12)
+ts_data_train_demanda_electrico
+# Fit the ARIMA model
+library(forecast)
+ARIMA_Demanda_electrico_12_0_10 <- Arima(ts_data_train_demanda_electrico, order = c(12, 0, 10))
+
+# Print the model summary
+summary(ARIMA_Demanda_electrico_12_0_10)
+
+```
+
+
+```{r}
+
+# Get prediction start and end dates
+# Get prediction start and end dates
+pred_start_date <- Demanda_electrico_importado_test$Date[1]
+pred_end_date <- Demanda_electrico_importado_test$Date[nrow(Demanda_electrico_importado_test)]
+
+# Get the predictors and residuals
+predictions <- predict(ARIMA_Demanda_electrico_12_0_10, n.ahead = length(Demanda_electrico_importado_test))
+print(predictions)
+residuals <- Demanda_electrico_importado_test$Demanda - predictions
+residuals
+
+
+```
+
