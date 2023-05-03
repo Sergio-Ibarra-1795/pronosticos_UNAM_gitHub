@@ -121,7 +121,7 @@ abline(h = c(0.2, -0.2), lty = 2, col = "red")
 
 ```
 
-#### BASED on PACF function we shoul start with an AR model with lags 1,2 or 5 
+
 
 ##### Get training and testing sets 
 
