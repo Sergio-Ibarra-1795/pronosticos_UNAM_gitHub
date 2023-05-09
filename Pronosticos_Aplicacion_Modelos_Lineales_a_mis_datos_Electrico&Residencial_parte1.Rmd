@@ -82,36 +82,34 @@ plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'ori
 
 ### Ahora intentemos ajustar un modelo lineal de la Demanda de gas natural en el sector electrico en función de la Temperatura 
 
-```{r}
-head(Demanda_electrico)
-```
-```{r}
-dim(Demanda_electrico)
-```
 
 ```{r}
 tend <- c(1:213)
 
+dim(tend)
+
 mes=c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
 
 rep_mes <- rep(mes,17)
-rep_mes
+
 
 rep_mes <-rep_mes[1:213] 
-rep_mes
+dim(rep_mes)
 
-Demanda_electrico_frame <- data.frame(Demanda_electrico,rep_mes,tend)
+Demanda_electrico_frame <- data.frame(Demanda_electrico_importado,rep_mes,tend)
 Demanda_electrico_frame
 
 ```
 
+
 ```{r}
-ajuste_electrico <- lm (Demanded_Gas~1 + rep_mes + tend, data=Demanda_electrico_frame)
-ajuste_electrico
+demanda_electrico_lineal_simple <- lm (Demanded_Gas~1 + rep_mes + tend, data=Demanda_electrico_frame)
+demanda_electrico_lineal_simple
 ```
 ```{r}
-summary(ajuste_electrico)
+summary(demanda_electrico_lineal_simple)
 ```
+
 
 ```{r}
 Demanded_gas <-c(3260,3010, 3063)
@@ -122,20 +120,29 @@ predict_frame <- data.frame(Demanded_gas,rep_mes,tend )
 predict_frame
 ```
 ```{r}
-prediccion_electrico <- predict(ajuste_electrico,predict_frame, se.fit = TRUE )
-prediccion_electrico
+prediccion_demanda_electrico_lineal_simple <- predict(demanda_electrico_lineal_simple,predict_frame, se.fit = TRUE )
+prediccion_demanda_electrico_lineal_simple
 ```
 
+
+
+Los ultimos publicaods por la SIE de 2022
 ```{r}
-valores_calculados_electrico2 <- prediccion_electrico$fit
+valores_reales_electrico <-c(3260,3010, 3063)
+```
+
+
+
+```{r}
+valores_calculados_demanda_electrico_lineal_simple <- prediccion_demanda_electrico_lineal_simple$fit
 
 # Calculate MAPE
-mape_electrico_lm <- mean(abs((valores_reales_electrico - valores_calculados_electrico2) / valores_reales_electrico)) * 100
-cat("The MAPE is:", round(mape,2),"%\n")
+mape_electrico_lm_simple <- mean(abs((valores_reales_electrico - valores_calculados_demanda_electrico_lineal_simple) / valores_reales_electrico)) * 100
+cat("The MAPE is:", round(mape_electrico_lm_simple,2),"%\n")
 
 # Calculate RMSE
-rmse_electrico_lm <- sqrt(mean((valores_reales_electrico - valores_calculados_electrico2)^2))
-cat("The RMSE is:", round(rmse,2),"\n")
+rmse_electrico_lm_simple <- sqrt(mean((valores_reales_electrico - valores_calculados_demanda_electrico_lineal_simple)^2))
+cat("The RMSE is:", round(rmse_electrico_lm_simple,2),"\n")
 ```
 
 
@@ -175,8 +182,6 @@ TT
 
 
 Construimos como tal el data.Frame
-
-
 
 
 ```{r}
@@ -233,18 +238,6 @@ plot(modelo_lineal_electrico)
 
 
 
-
-
-
-
-
-
-Los ultimos publicaods por la SIE de 2022
-```{r}
-valores_reales_electrico <-c(3260,3010, 3063)
-```
-
-
 ```{r}
 valores_calculados_electrico <-c(3546.517, 3158.247, 3200.122)
 ```
@@ -286,7 +279,7 @@ dim(Demanda_residencial_importado)
 ```
 
 
-We add a new columns in a data type of data by transforming our 'original' Date columns into an as.date column 
+We change Date column in a data type of data by transforming our 'original' Date columns into an as.date column 
 
 ```{r}
 Demanda_residencial_importado$Date <- as.Date(Demanda_residencial_importado$Date, format = "%m/%d/%Y")
