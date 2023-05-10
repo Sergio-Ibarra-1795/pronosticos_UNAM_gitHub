@@ -116,7 +116,11 @@ Demanded_gas <-c(3260,3010, 3063)
 rep_mes <- c("sep", "oct", "nov")
 tend <- c(214:216) 
 
-predict_frame <- data.frame(Demanded_gas,rep_mes,tend )
+#predict_frame <- data.frame(Demanded_gas,rep_mes,tend )
+#predict_frame
+
+
+predict_frame <- data.frame(rep_mes,tend )
 predict_frame
 ```
 ```{r}
@@ -125,8 +129,7 @@ prediccion_demanda_electrico_lineal_simple
 ```
 
 
-
-Los ultimos publicaods por la SIE de 2022
+##### Los ultimos publicados por la SIE de datos reales de Demanda_electrico para los msese de Agosto, Sepy y Oct de 2022
 ```{r}
 valores_reales_electrico <-c(3260,3010, 3063)
 ```
@@ -148,9 +151,9 @@ cat("The RMSE is:", round(rmse_electrico_lm_simple,2),"\n")
 ```
 
 
+### Intentemos un modelo lineal con la Temperatura 
 
-
-##### Importamos la data historica del clima 
+#### Importamos la data historica del clima 
 ```{r}
 #URL HPi3
 Temperatura_historico_importado<-read.csv("Temperatura_Media_CDMX_pron.csv", header= TRUE)
@@ -247,19 +250,172 @@ prediccion_demanda_electrico_lineal_electrico_y_Tem
 ```
 
 
-#### Calculo de errores del método lineal con TEMPERATURA para los datos de Demanda_electrico
+
+#### Claculo de ACF & PACF para el caso de la data de demanda del sector eléctrico 
 
 ```{r}
-# Calculate MAPE
-mape_electrico_lineal_con_Temp <- mean(abs((valores_reales_electrico - valores_calculados_electrico) / valores_reales_electrico)) * 100
-cat("The MAPE is:", round(mape_electrico_lineal_con_Temp,2),"%\n")
+#  ACF (Autocorrelation function)
+acf_demanda_electrico_tot <- acf(na.omit(Demanda_electrico_importado), lag.max = 100)
+acf_demanda_electrico_tot
 
-# Calculate RMSE
-rmse_electrico_lineal_con_Temp <- sqrt(mean((valores_reales_electrico - valores_calculados_electrico)^2))
-cat("The RMSE is:", round(rmse_electrico_lineal_con_Temp,2),"\n")
+#  PACF (Partial Autocorrelation function)
+pacf_demanda_electrico_tot <- pacf(na.omit(Demanda_electrico_importado))
+pacf_demanda_electrico_tot
 ```
 
 
+
+Note: In R, the pacf() function does not have a lag.max argument like the acf() function. Instead, the pacf() function computes the partial autocorrelation coefficients up to the maximum lag of the data by default. Therefore, we do not need to specify a lag.max parameter when calling the pacf() function.
+
+The lag.max parameter in the acf() function is used to specify the maximum lag at which to compute the autocorrelation coefficients. For example, setting lag.max = 10 would compute the autocorrelation coefficients up to a lag of 10. This parameter is optional and if not specified, it defaults to min(10, n-1) where n is the length of the input data.
+
+It is worth noting that in practice, the choice of lag.max depends on the characteristics of the time series data and the purpose of the analysis. For instance, if the time series data is known to have a seasonal pattern, we might want to set lag.max to a multiple of the seasonal frequency.
+
+
+
+#### Determinación de ACF & PACF para el caso de la data de demanda del sector eléctrico 
+
+```{r}
+#install.packages("forecast")
+library(forecast)
+
+
+acf_demanda_electrico <- Acf(Demanda_electrico_importado.ts, lag.max = 100, plot = FALSE, ci.type = "ma")
+acf_demanda_electrico
+
+
+pacf_demanda_electrico <- Pacf(Demanda_electrico_importado.ts, lag.max = 100, plot = FALSE, ci.type = "ma")
+pacf_demanda_electrico
+```
+
+
+
+##### ACF & PACF para los datos de Demanda_electrico sin 'estacionarizar '
+```{r}
+library(forecast)
+
+# Compute ACF and PACF with ci.type
+acf_demanda_electrico <- Acf(Demanda_electrico_importado.ts, lag.max = 100, plot = FALSE, ci.type = "ma")
+pacf_demanda_electrico <- Pacf(Demanda_electrico_importado.ts, lag.max = 100, plot = FALSE, ci.type = "ma")
+
+# Plot ACF with significant lags only
+plot(acf_demanda_electrico$lag, acf_demanda_electrico$acf, type = "h", lwd = 2, xlab = "Lag", ylab = "ACF", ylim=c(-0.3,1), main = "Autocorrelation Function (ACF)")
+abline(h = c(0.2, -0.2), lty = 2, col = "red")
+
+# Plot PACF with significant lags only
+plot(pacf_demanda_electrico$lag, pacf_demanda_electrico$acf, type = "h", lwd = 2, xlab = "Lag", ylab = "PACF", ylim=c(-0.3,1), main = "Partial Autocorrelation Function (PACF)")
+abline(h = c(0.2, -0.2), lty = 2, col = "red")
+
+```
+
+
+#### Vamos a 'diferenciar la serie para hacerlo estacionaria'
+
+```{r}
+# Calculate the difference between consecutive elements
+Demanda_electrico_diferencia <- diff(Demanda_electrico_importado.ts)
+
+# Print the results
+print(Demanda_electrico_diferencia)
+
+```
+
+
+
+
+##### ACF & PACF para los datos de Demanda_electrico 'estacionariazada'
+```{r}
+library(forecast)
+
+# Compute ACF and PACF with ci.type
+acf_demanda_electrico_differencia <- Acf(Demanda_electrico_diferencia, lag.max = 100, plot = FALSE, ci.type = "ma")
+pacf_demanda_electrico_differencia <- Pacf(Demanda_electrico_diferencia, lag.max = 100, plot = FALSE, ci.type = "ma")
+
+# Plot ACF with significant lags only
+plot(acf_demanda_electrico_differencia$lag, acf_demanda_electrico_differencia$acf, type = "h", lwd = 2, xlab = "Lag", ylab = "ACF", ylim=c(-0.3,1), main = "Autocorrelation Function (ACF)")
+abline(h = c(0.2, -0.2), lty = 2, col = "red")
+
+# Plot PACF with significant lags only
+plot(pacf_demanda_electrico_differencia$lag, pacf_demanda_electrico_differencia$acf, type = "h", lwd = 2, xlab = "Lag", ylab = "PACF", ylim=c(-0.3,1), main = "Partial Autocorrelation Function (PACF)")
+abline(h = c(0.2, -0.2), lty = 2, col = "red")
+
+```
+
+
+
+
+##### Get training and testing sets 
+
+
+```{r}
+
+# Set the train and test end dates
+train_end <- as.Date("2018-12-01")
+test_end <- as.Date("2022-12-01")
+##This means we are taking from 2005 to 2018 as traning data to predict 2019 and 2020
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+Demanda_electrico_differencia_train <- Demanda_electrico_diferencia[1:201]
+Demanda_electrico_differencia_train
+
+
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_differencia_test <- Demanda_electrico_diferencia[202:211]
+Demanda_electrico_differencia_test
+
+
+
+```
+
+
+
+```{r}
+library(forecast)
+
+# Fit the ARIMA model
+ARIMA_Demanda_electrico_1_0_1 <- Arima(Demanda_electrico_differencia_train, order=c(1,0,1))
+
+# Print the model summary
+summary(ARIMA_Demanda_electrico_1_0_1)
+
+```
+
+
+
+```{r}
+
+
+# Get the predictors and residuals
+predictions_ARIMA_Demanda_electrico_1_0_1 <- predict(ARIMA_Demanda_electrico_1_0_1, n.ahead = length(Demanda_electrico_differencia_test))
+
+
+predictions_ARIMA_Demanda_electrico_1_0_1 <- as.numeric(unlist(predictions_ARIMA_Demanda_electrico_1_0_1))
+
+print(predictions_ARIMA_Demanda_electrico_1_0_1)
+
+
+```
+
+
+```{r}
+Demanda_electrico_differencia_test <- as.numeric(Demanda_electrico_differencia_test)
+predictions_ARIMA_Demanda_electrico_1_0_1 <- as.numeric(predictions_ARIMA_Demanda_electrico_1_0_1)
+
+
+residuals_ARIMA_Demanda_electrico_1_0_1 <- unlist(Demanda_electrico_differencia_test) - unlist(predictions_ARIMA_Demanda_electrico_1_0_1)
+
+print(residuals_ARIMA_Demanda_electrico_1_0_1)
+
+```
 
 
 
