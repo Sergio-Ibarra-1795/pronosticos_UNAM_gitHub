@@ -78,9 +78,7 @@ plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'ori
 
 
 
-
-
-### Ahora intentemos ajustar un modelo lineal de la Demanda de gas natural en el sector electrico en función de la Temperatura 
+### Ahora intentemos ajustar un modelo lineal generalizado para la Demanda de gas natural en el sector electrico 
 
 
 ```{r}
@@ -110,9 +108,8 @@ demanda_electrico_lineal_simple
 summary(demanda_electrico_lineal_simple)
 ```
 
-
+##### Creamos el framework para predecir los siguientes 3 datos
 ```{r}
-Demanded_gas <-c(3260,3010, 3063)
 rep_mes <- c("sep", "oct", "nov")
 tend <- c(214:216) 
 
@@ -136,7 +133,7 @@ valores_reales_electrico <-c(3260,3010, 3063)
 
 
 
-#### Calculo de errores del método lineal generalizado 'simple' para los datos de Demanda_electrico
+##### Calculo de errores del método lineal generalizado 'simple' para los datos de Demanda_electrico
 
 ```{r}
 valores_calculados_demanda_electrico_lineal_simple <- prediccion_demanda_electrico_lineal_simple$fit
@@ -151,9 +148,9 @@ cat("The RMSE is:", round(rmse_electrico_lm_simple,2),"\n")
 ```
 
 
-### Intentemos un modelo lineal con la Temperatura 
+#### Intentemos un modelo lineal simple de Demanda_electrico como función de la Temperatura 
 
-#### Importamos la data historica del clima 
+##### Importamos la data historica del clima 
 ```{r}
 #URL HPi3
 Temperatura_historico_importado<-read.csv("Temperatura_Media_CDMX_pron.csv", header= TRUE)
@@ -178,15 +175,17 @@ TT
 
 ```{r}
 XE <- as.matrix(c(XE), nrow=96, ncol=1)
-XE
+head(XE)
+tail(XE)
 
 TT <- as.matrix(c(TT),nrow=96, ncol=1)
-TT
+head(TT)
+tail(TT)
 
 ```
 
 
-Construimos como tal el data.Frame
+##### Construimos como tal el data.Frame para el modelo lineal de Demanda_electrico con la Temperatura 
 
 
 ```{r}
@@ -222,31 +221,39 @@ names(Electrico_Demanda_y_Tem_Frame)
 ```
 
 
-#### Vamos a ajustar el modelo lineal de Demanda_electrico con Temperatura 
+##### Vamos a ajustar el modelo lineal de Demanda_electrico con Temperatura 
 ```{r}
 modelo_lineal_electrico_y_Tem <- lm(Electrico_Demanda_y_Tem_Frame$Demanda_electrico ~1 + Electrico_Demanda_y_Tem_Frame$Temperature)
 
 modelo_lineal_electrico_y_Tem
 ```
 
-#### Analizando el modelo lineal Demanda_electrico con Temperatura 
+##### Analizando el modelo lineal Demanda_electrico con Temperatura 
 
 ```{r}
 summary(modelo_lineal_electrico_y_Tem)
 ```
 
-#### Diagnostico de residuales Demanda_electrico con Temperatura 
+##### Diagnostico de residuales Demanda_electrico con Temperatura 
 
 ```{r}
 plot(modelo_lineal_electrico_y_Tem)
 ```
 
+```{r}
+predict_frame_electrico_Temp <- predict_frame
+predict_frame_electrico_Temp$tend <-predict_frame_electrico_Temp$Temp
+predict_frame_electrico_Temp$Temp <-c(21,20,22)
+predict_frame_electrico_Temp
+```
 
 
 #### Predicicon con modelo  lineal Demanda_electrico con Temperatura 
 ```{r}
-prediccion_demanda_electrico_lineal_electrico_y_Tem <- predict(modelo_lineal_electrico_y_Tem,  , se.fit = TRUE )
+
+prediccion_demanda_electrico_lineal_electrico_y_Tem <- predict(modelo_lineal_electrico_y_Tem,predict_frame_electrico_Temp, se.fit = TRUE )
 prediccion_demanda_electrico_lineal_electrico_y_Tem
+
 ```
 
 
@@ -262,14 +269,6 @@ acf_demanda_electrico_tot
 pacf_demanda_electrico_tot <- pacf(na.omit(Demanda_electrico_importado))
 pacf_demanda_electrico_tot
 ```
-
-
-
-Note: In R, the pacf() function does not have a lag.max argument like the acf() function. Instead, the pacf() function computes the partial autocorrelation coefficients up to the maximum lag of the data by default. Therefore, we do not need to specify a lag.max parameter when calling the pacf() function.
-
-The lag.max parameter in the acf() function is used to specify the maximum lag at which to compute the autocorrelation coefficients. For example, setting lag.max = 10 would compute the autocorrelation coefficients up to a lag of 10. This parameter is optional and if not specified, it defaults to min(10, n-1) where n is the length of the input data.
-
-It is worth noting that in practice, the choice of lag.max depends on the characteristics of the time series data and the purpose of the analysis. For instance, if the time series data is known to have a seasonal pattern, we might want to set lag.max to a multiple of the seasonal frequency.
 
 
 
@@ -348,11 +347,6 @@ abline(h = c(0.2, -0.2), lty = 2, col = "red")
 
 
 ```{r}
-
-# Set the train and test end dates
-train_end <- as.Date("2018-12-01")
-test_end <- as.Date("2022-12-01")
-##This means we are taking from 2005 to 2018 as traning data to predict 2019 and 2020
 
 # Split the data into training and testing sets
 
