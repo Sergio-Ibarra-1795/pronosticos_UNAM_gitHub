@@ -25,7 +25,7 @@ library(hydroGOF)
 ```
 
 
-### Let´s start wiht Demanda_electrico
+## Empezeos el análisis con los datos de Demanda_electrico
 
 We first import our data 
 ```{r}
@@ -59,7 +59,7 @@ dim(Demanda_electrico_importado)
 ```
 
 
-#### Let´s see How it looks like time serie 
+#### Serie de tiempo de los datos de Demanda_electrico
 
 ```{r}
 Demanda_electrico_importado.ts<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1), end =c(2022,8))
@@ -78,7 +78,7 @@ plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'ori
 
 
 
-### Replication of  Holt Winter´s method in R for Demanda_electrico
+
 
 ### Ahora intentemos ajustar un modelo lineal de la Demanda de gas natural en el sector electrico en función de la Temperatura 
 
@@ -133,6 +133,8 @@ valores_reales_electrico <-c(3260,3010, 3063)
 
 
 
+#### Calculo de errores del método lineal generalizado 'simple' para los datos de Demanda_electrico
+
 ```{r}
 valores_calculados_demanda_electrico_lineal_simple <- prediccion_demanda_electrico_lineal_simple$fit
 
@@ -148,7 +150,7 @@ cat("The RMSE is:", round(rmse_electrico_lm_simple,2),"\n")
 
 
 
-Importamos la data historica del clima 
+##### Importamos la data historica del clima 
 ```{r}
 #URL HPi3
 Temperatura_historico_importado<-read.csv("Temperatura_Media_CDMX_pron.csv", header= TRUE)
@@ -156,7 +158,7 @@ Temperatura_historico_importado
 
 ```
 
-Separamos la data XE:Demanda_electrico de 2015 a 2022 y YY:Temperatura promedio 
+##### Separamos la data XE:Demanda_electrico de 2015 a 2022 y YY:Temperatura promedio 
 
 ```{r}
 XE <- Demanda_electrico$Demanded_Gas[118:213]
@@ -185,78 +187,84 @@ Construimos como tal el data.Frame
 
 
 ```{r}
-TabData_elctrcio <- cbind(TT,XE)
-colnames(TabData_elctrcio) <- c("Temperature","Demanda_electrico")
+Electrico_Demanda_y_Tem_Frame <- cbind(TT,XE)
+colnames(Electrico_Demanda_y_Tem_Frame) <- c("Temperature","Demanda_electrico")
 
 ##Conviritiendo en data.frame
-TabData_frame_electrico<- as.data.frame(TabData_elctrcio)
-TabData_frame_electrico
+Electrico_Demanda_y_Tem_Frame<- as.data.frame(Electrico_Demanda_y_Tem_Frame)
+Electrico_Demanda_y_Tem_Frame
 
-plot(TabData_frame_electrico$Demanda_electrico,TabData_frame_electrico$Temperatura, pch = 16, cex= 1.5, xlab="Temperatura", ylab="Demanda_electrico")
+plot(Electrico_Demanda_y_Tem_Frame$Demanda_electrico,Electrico_Demanda_y_Tem_Frame$Temperatura, pch = 16, cex= 1.5, xlab="Temperatura", ylab="Demanda_electrico")
      
 ```
 
 
 
-Viendo la correlación entre las variables
+##### Viendo la correlación entre las variables Temperatura y Demanda_electrico
 
 
 ```{r}
-TabData_frame_electrico <- na.omit(TabData_frame_electrico)
+Electrico_Demanda_y_Tem_Frame <- na.omit(Electrico_Demanda_y_Tem_Frame)
 ```
 
 
 ```{r}
-cor(TabData_frame_electrico)
+cor(Electrico_Demanda_y_Tem_Frame)
 ```
 
 
 ```{r}
-names(TabData_frame_electrico)
+names(Electrico_Demanda_y_Tem_Frame)
 
 ```
 
 
-### Vamos a ajustar el modelo lineal
+#### Vamos a ajustar el modelo lineal de Demanda_electrico con Temperatura 
 ```{r}
-modelo_lineal_electrico <- lm(TabData_frame_electrico$Demanda_electrico ~1 + TabData_frame_electrico$Temperature)
+modelo_lineal_electrico_y_Tem <- lm(Electrico_Demanda_y_Tem_Frame$Demanda_electrico ~1 + Electrico_Demanda_y_Tem_Frame$Temperature)
 
-modelo_lineal_electrico
+modelo_lineal_electrico_y_Tem
 ```
 
-### Analizando el modelo lineal 
-
-```{r}
-summary(modelo_lineal_electrico)
-```
-
-### Diagnostico de residuales
+#### Analizando el modelo lineal Demanda_electrico con Temperatura 
 
 ```{r}
-plot(modelo_lineal_electrico)
+summary(modelo_lineal_electrico_y_Tem)
 ```
 
-
+#### Diagnostico de residuales Demanda_electrico con Temperatura 
 
 ```{r}
-valores_calculados_electrico <-c(3546.517, 3158.247, 3200.122)
+plot(modelo_lineal_electrico_y_Tem)
 ```
 
+
+
+#### Predicicon con modelo  lineal Demanda_electrico con Temperatura 
+```{r}
+prediccion_demanda_electrico_lineal_electrico_y_Tem <- predict(modelo_lineal_electrico_y_Tem,  , se.fit = TRUE )
+prediccion_demanda_electrico_lineal_electrico_y_Tem
+```
+
+
+#### Calculo de errores del método lineal con TEMPERATURA para los datos de Demanda_electrico
 
 ```{r}
 # Calculate MAPE
-mape_electrico_HW <- mean(abs((valores_reales_electrico - valores_calculados_electrico) / valores_reales_electrico)) * 100
-cat("The MAPE is:", round(mape,2),"%\n")
+mape_electrico_lineal_con_Temp <- mean(abs((valores_reales_electrico - valores_calculados_electrico) / valores_reales_electrico)) * 100
+cat("The MAPE is:", round(mape_electrico_lineal_con_Temp,2),"%\n")
 
 # Calculate RMSE
-rmse_electrico_HW <- sqrt(mean((valores_reales_electrico - valores_calculados_electrico)^2))
-cat("The RMSE is:", round(rmse,2),"\n")
+rmse_electrico_lineal_con_Temp <- sqrt(mean((valores_reales_electrico - valores_calculados_electrico)^2))
+cat("The RMSE is:", round(rmse_electrico_lineal_con_Temp,2),"\n")
 ```
 
 
 
 
-### Now with Demanda_residencial
+
+
+## Ahora hagamoslo para los datos de Demanda_residencial
 
 
 We first import our data 
@@ -291,7 +299,7 @@ dim(Demanda_residencial_importado)
 ```
 
 
-#### Let´s see How it looks like time serie 
+#### Serie de tiempo para los datos de Demanda_residencial 
 
 ```{r}
 Demanda_residencial_importado.ts<- ts(Demanda_residencial_importado$Demanded_Gas, frequency = 12, start =c(2005,1), end =c(2022,8))
@@ -350,22 +358,7 @@ Demanda_residencial_importado.ts
 
 
 
-##### HAGAMOS COMO TAL EL FORECAST DEL MODELO HOLT-WINTER PARA EL CASO DE DEMANDA_ELECTRICO
-```{r}
-Demanda_residencial_HW_forecast <- forecast(Demanda_residencial_HW, h=12, level=0.95)
-Demanda_residencial_HW_forecast
-```
-
-Let´s plot the forecast generated by HoltWinters model in  R 
-
-```{r}
-plot(Demanda_residencial_HW_forecast)
-```
-
-
-
-
-### Aplicaicón de modelo lineal para Demanda_residencial
+#### Aplicaicón de modelo lineal para Demanda_residencial
 
 Separamos la data XE:Demanda_electrico de 2015 a 2022 y YY:Temperatura promedio 
 
@@ -373,9 +366,6 @@ Separamos la data XE:Demanda_electrico de 2015 a 2022 y YY:Temperatura promedio
 XR <- Demanda_residencial_importado$Demanded_Gas[118:213]
 XR
 ```
-
-
-
 
 
 ```{r}
@@ -389,8 +379,6 @@ TT
 
 
 Construimos como tal el data.Frame
-
-
 
 ```{r}
 TabData_residencial <- cbind(TT,XE)
@@ -422,19 +410,19 @@ cor(TabData_frame_residencial)
 ```
 
 
-### Vamos a ajustar el modelo lineal
+#### Vamos a ajustar el modelo lineal
 ```{r}
 modelo_lineal_residencial <- lm(TabData_frame_residencial$Demanda_residencial ~1 + TabData_frame_electrico$Temperature)
 modelo_lineal_residencial
 ```
 
-### Analizando el modelo lineal 
+#### Analizando el modelo lineal 
 
 ```{r}
 summary(modelo_lineal_residencial)
 ```
 
-### Diagnostico de residuales
+#### Diagnostico de residuales
 
 ```{r}
 plot(modelo_lineal_residencial)
