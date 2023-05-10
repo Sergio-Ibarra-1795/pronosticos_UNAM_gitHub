@@ -1,0 +1,584 @@
+---
+title: "Pronosticos_Class_9_Mayo_Aplicacion_Modelos_ARIMA_y_Lineales_a_mis_datos"
+author: "Sergi"
+date: "2023-02-27"
+output: html_document
+---
+
+
+## Aplicación de métodos de pronóstico lineales a la series de tiempo de A) Demanda_electrico y B )Demanda_residencial   
+
+```{r}
+
+library(tidyverse)      # data manipulation and visualization
+library(lubridate)      # easily work with dates and times
+library(fpp2)           # working with time series data
+library(zoo)
+library(ggplot2)
+library(plyr)
+library(dplyr)
+library(knitr)
+library(TTR)
+library(hydroGOF)
+
+
+```
+
+
+## Empezeos el análisis con los datos de Demanda_electrico
+
+We first import our data 
+```{r}
+#URL HPi5
+#Demanda_electrico_importado<-read.csv("C:\\Users\\llell\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM_HPi5\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
+#URL HPi3
+Demanda_electrico_importado<-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
+```
+
+
+We checked the importing has worked 
+```{r}
+head(Demanda_electrico_importado)
+summary(Demanda_electrico_importado)
+typeof(Demanda_electrico_importado)
+dim(Demanda_electrico_importado)
+```
+
+
+
+We change column Date in a data type of data by transforming our 'original' Date columns into an as.date column 
+
+```{r}
+Demanda_electrico_importado$Date <- as.Date(Demanda_electrico_importado$Date, format = "%m/%d/%Y")
+head(Demanda_electrico_importado)
+tail(Demanda_electrico_importado)
+typeof(Demanda_electrico_importado)
+dim(Demanda_electrico_importado)
+
+```
+
+
+#### Serie de tiempo de los datos de Demanda_electrico
+
+```{r}
+Demanda_electrico_importado.ts<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1), end =c(2022,8))
+head(Demanda_electrico_importado.ts)
+
+typeof(Demanda_electrico_importado.ts)
+dim(Demanda_electrico_importado.ts)
+```
+
+
+Then we plot the 'original demanded gas in electric time series'
+```{r}
+plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'original' ")
+
+```
+
+
+
+### Ahora intentemos ajustar un modelo lineal generalizado para la Demanda de gas natural en el sector electrico 
+
+
+```{r}
+tend <- c(1:213)
+
+dim(tend)
+
+mes=c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
+
+rep_mes <- rep(mes,17)
+
+
+rep_mes <-rep_mes[1:213] 
+dim(rep_mes)
+
+Demanda_electrico_frame <- data.frame(Demanda_electrico_importado,rep_mes,tend)
+Demanda_electrico_frame
+
+```
+
+
+```{r}
+demanda_electrico_lineal_simple <- lm (Demanded_Gas~1 + rep_mes + tend, data=Demanda_electrico_frame)
+demanda_electrico_lineal_simple
+```
+```{r}
+summary(demanda_electrico_lineal_simple)
+```
+
+##### Creamos el framework para predecir los siguientes 3 datos
+```{r}
+rep_mes <- c("sep", "oct", "nov")
+tend <- c(214:216) 
+
+#predict_frame <- data.frame(Demanded_gas,rep_mes,tend )
+#predict_frame
+
+
+predict_frame <- data.frame(rep_mes,tend )
+predict_frame
+```
+```{r}
+prediccion_demanda_electrico_lineal_simple <- predict(demanda_electrico_lineal_simple,predict_frame, se.fit = TRUE )
+prediccion_demanda_electrico_lineal_simple
+```
+
+
+##### Los ultimos publicados por la SIE de datos reales de Demanda_electrico para los msese de Agosto, Sepy y Oct de 2022
+```{r}
+valores_reales_electrico <-c(3260,3010, 3063)
+```
+
+
+
+##### Calculo de errores del método lineal generalizado 'simple' para los datos de Demanda_electrico
+
+```{r}
+valores_calculados_demanda_electrico_lineal_simple <- prediccion_demanda_electrico_lineal_simple$fit
+
+# Calculate MAPE
+mape_electrico_lm_simple <- mean(abs((valores_reales_electrico - valores_calculados_demanda_electrico_lineal_simple) / valores_reales_electrico)) * 100
+cat("The MAPE is:", round(mape_electrico_lm_simple,2),"%\n")
+
+# Calculate RMSE
+rmse_electrico_lm_simple <- sqrt(mean((valores_reales_electrico - valores_calculados_demanda_electrico_lineal_simple)^2))
+cat("The RMSE is:", round(rmse_electrico_lm_simple,2),"\n")
+```
+
+
+#### Intentemos un modelo lineal simple de Demanda_electrico como función de la Temperatura 
+
+##### Importamos la data historica del clima 
+```{r}
+#URL HPi3
+Temperatura_historico_importado<-read.csv("Temperatura_Media_CDMX_pron.csv", header= TRUE)
+Temperatura_historico_importado
+
+```
+
+##### Separamos la data XE:Demanda_electrico de 2015 a 2022 y YY:Temperatura promedio 
+
+```{r}
+XE <- Demanda_electrico$Demanded_Gas[118:213]
+XE
+```
+
+
+```{r}
+TT <- Temperatura_historico_importado$Temperature
+TT
+```
+
+
+
+```{r}
+XE <- as.matrix(c(XE), nrow=96, ncol=1)
+head(XE)
+tail(XE)
+
+TT <- as.matrix(c(TT),nrow=96, ncol=1)
+head(TT)
+tail(TT)
+
+```
+
+
+##### Construimos como tal el data.Frame para el modelo lineal de Demanda_electrico con la Temperatura 
+
+
+```{r}
+Electrico_Demanda_y_Tem_Frame <- cbind(TT,XE)
+colnames(Electrico_Demanda_y_Tem_Frame) <- c("Temperature","Demanda_electrico")
+
+##Conviritiendo en data.frame
+Electrico_Demanda_y_Tem_Frame<- as.data.frame(Electrico_Demanda_y_Tem_Frame)
+Electrico_Demanda_y_Tem_Frame
+
+plot(Electrico_Demanda_y_Tem_Frame$Demanda_electrico,Electrico_Demanda_y_Tem_Frame$Temperatura, pch = 16, cex= 1.5, xlab="Temperatura", ylab="Demanda_electrico")
+     
+```
+
+
+
+##### Viendo la correlación entre las variables Temperatura y Demanda_electrico
+
+
+```{r}
+Electrico_Demanda_y_Tem_Frame <- na.omit(Electrico_Demanda_y_Tem_Frame)
+```
+
+
+```{r}
+cor(Electrico_Demanda_y_Tem_Frame)
+```
+
+
+```{r}
+names(Electrico_Demanda_y_Tem_Frame)
+
+```
+
+
+##### Vamos a ajustar el modelo lineal de Demanda_electrico con Temperatura 
+```{r}
+modelo_lineal_electrico_y_Tem <- lm(Electrico_Demanda_y_Tem_Frame$Demanda_electrico ~1 + Electrico_Demanda_y_Tem_Frame$Temperature)
+
+modelo_lineal_electrico_y_Tem
+```
+
+##### Analizando el modelo lineal Demanda_electrico con Temperatura 
+
+```{r}
+summary(modelo_lineal_electrico_y_Tem)
+```
+
+##### Diagnostico de residuales Demanda_electrico con Temperatura 
+
+```{r}
+plot(modelo_lineal_electrico_y_Tem)
+```
+
+```{r}
+predict_frame_electrico_Temp <- predict_frame
+predict_frame_electrico_Temp$tend <-predict_frame_electrico_Temp$Temp
+predict_frame_electrico_Temp$Temp <-c(21,20,22)
+predict_frame_electrico_Temp
+```
+
+
+#### Predicicon con modelo  lineal Demanda_electrico con Temperatura 
+```{r}
+
+prediccion_demanda_electrico_lineal_electrico_y_Tem <- predict(modelo_lineal_electrico_y_Tem,predict_frame_electrico_Temp, se.fit = TRUE )
+prediccion_demanda_electrico_lineal_electrico_y_Tem
+
+```
+
+
+
+#### Claculo de ACF & PACF para el caso de la data de demanda del sector eléctrico 
+
+```{r}
+#  ACF (Autocorrelation function)
+acf_demanda_electrico_tot <- acf(na.omit(Demanda_electrico_importado), lag.max = 100)
+acf_demanda_electrico_tot
+
+#  PACF (Partial Autocorrelation function)
+pacf_demanda_electrico_tot <- pacf(na.omit(Demanda_electrico_importado))
+pacf_demanda_electrico_tot
+```
+
+
+
+#### Determinación de ACF & PACF para el caso de la data de demanda del sector eléctrico 
+
+```{r}
+#install.packages("forecast")
+library(forecast)
+
+
+acf_demanda_electrico <- Acf(Demanda_electrico_importado.ts, lag.max = 100, plot = FALSE, ci.type = "ma")
+acf_demanda_electrico
+
+
+pacf_demanda_electrico <- Pacf(Demanda_electrico_importado.ts, lag.max = 100, plot = FALSE, ci.type = "ma")
+pacf_demanda_electrico
+```
+
+
+
+##### ACF & PACF para los datos de Demanda_electrico sin 'estacionarizar '
+```{r}
+library(forecast)
+
+# Compute ACF and PACF with ci.type
+acf_demanda_electrico <- Acf(Demanda_electrico_importado.ts, lag.max = 100, plot = FALSE, ci.type = "ma")
+pacf_demanda_electrico <- Pacf(Demanda_electrico_importado.ts, lag.max = 100, plot = FALSE, ci.type = "ma")
+
+# Plot ACF with significant lags only
+plot(acf_demanda_electrico$lag, acf_demanda_electrico$acf, type = "h", lwd = 2, xlab = "Lag", ylab = "ACF", ylim=c(-0.3,1), main = "Autocorrelation Function (ACF)")
+abline(h = c(0.2, -0.2), lty = 2, col = "red")
+
+# Plot PACF with significant lags only
+plot(pacf_demanda_electrico$lag, pacf_demanda_electrico$acf, type = "h", lwd = 2, xlab = "Lag", ylab = "PACF", ylim=c(-0.3,1), main = "Partial Autocorrelation Function (PACF)")
+abline(h = c(0.2, -0.2), lty = 2, col = "red")
+
+```
+
+
+#### Vamos a 'diferenciar la serie para hacerlo estacionaria'
+
+```{r}
+# Calculate the difference between consecutive elements
+Demanda_electrico_diferencia <- diff(Demanda_electrico_importado.ts)
+
+# Print the results
+print(Demanda_electrico_diferencia)
+
+```
+
+
+
+
+##### ACF & PACF para los datos de Demanda_electrico 'estacionariazada'
+```{r}
+library(forecast)
+
+# Compute ACF and PACF with ci.type
+acf_demanda_electrico_differencia <- Acf(Demanda_electrico_diferencia, lag.max = 100, plot = FALSE, ci.type = "ma")
+pacf_demanda_electrico_differencia <- Pacf(Demanda_electrico_diferencia, lag.max = 100, plot = FALSE, ci.type = "ma")
+
+# Plot ACF with significant lags only
+plot(acf_demanda_electrico_differencia$lag, acf_demanda_electrico_differencia$acf, type = "h", lwd = 2, xlab = "Lag", ylab = "ACF", ylim=c(-0.3,1), main = "Autocorrelation Function (ACF)")
+abline(h = c(0.2, -0.2), lty = 2, col = "red")
+
+# Plot PACF with significant lags only
+plot(pacf_demanda_electrico_differencia$lag, pacf_demanda_electrico_differencia$acf, type = "h", lwd = 2, xlab = "Lag", ylab = "PACF", ylim=c(-0.3,1), main = "Partial Autocorrelation Function (PACF)")
+abline(h = c(0.2, -0.2), lty = 2, col = "red")
+
+```
+
+
+
+
+##### Get training and testing sets 
+
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+Demanda_electrico_differencia_train <- Demanda_electrico_diferencia[1:201]
+Demanda_electrico_differencia_train
+
+
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_differencia_test <- Demanda_electrico_diferencia[202:211]
+Demanda_electrico_differencia_test
+
+
+
+```
+
+
+
+```{r}
+library(forecast)
+
+# Fit the ARIMA model
+ARIMA_Demanda_electrico_1_0_1 <- Arima(Demanda_electrico_differencia_train, order=c(1,0,1))
+
+# Print the model summary
+summary(ARIMA_Demanda_electrico_1_0_1)
+
+```
+
+
+
+```{r}
+
+
+# Get the predictors and residuals
+predictions_ARIMA_Demanda_electrico_1_0_1 <- predict(ARIMA_Demanda_electrico_1_0_1, n.ahead = length(Demanda_electrico_differencia_test))
+
+
+predictions_ARIMA_Demanda_electrico_1_0_1 <- as.numeric(unlist(predictions_ARIMA_Demanda_electrico_1_0_1))
+
+print(predictions_ARIMA_Demanda_electrico_1_0_1)
+
+
+```
+
+
+```{r}
+Demanda_electrico_differencia_test <- as.numeric(Demanda_electrico_differencia_test)
+predictions_ARIMA_Demanda_electrico_1_0_1 <- as.numeric(predictions_ARIMA_Demanda_electrico_1_0_1)
+
+
+residuals_ARIMA_Demanda_electrico_1_0_1 <- unlist(Demanda_electrico_differencia_test) - unlist(predictions_ARIMA_Demanda_electrico_1_0_1)
+
+print(residuals_ARIMA_Demanda_electrico_1_0_1)
+
+```
+
+
+
+
+## Ahora hagamoslo para los datos de Demanda_residencial
+
+
+We first import our data 
+```{r}
+#URL HPi5
+#Demanda_electrico_importado<-read.csv("C:\\Users\\llell\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM_HPi5\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
+#URL HPi3
+Demanda_residencial_importado<-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_residencial_2022_full1.csv", header= TRUE)
+```
+
+
+
+We checked the importing has worked 
+```{r}
+head(Demanda_residencial_importado)
+summary(Demanda_residencial_importado)
+typeof(Demanda_residencial_importado)
+dim(Demanda_residencial_importado)
+```
+
+
+We change Date column in a data type of data by transforming our 'original' Date columns into an as.date column 
+
+```{r}
+Demanda_residencial_importado$Date <- as.Date(Demanda_residencial_importado$Date, format = "%m/%d/%Y")
+head(Demanda_residencial_importado)
+tail(Demanda_residencial_importado)
+typeof(Demanda_residencial_importado)
+dim(Demanda_residencial_importado)
+
+```
+
+
+#### Serie de tiempo para los datos de Demanda_residencial 
+
+```{r}
+Demanda_residencial_importado.ts<- ts(Demanda_residencial_importado$Demanded_Gas, frequency = 12, start =c(2005,1), end =c(2022,8))
+Demanda_residencial_importado.ts
+
+typeof(Demanda_residencial_importado.ts)
+dim(Demanda_residencial_importado.ts)
+```
+
+```{r}
+head(Demanda_residencial_importado)
+
+demanded_residencial_pre_pandemia <- Demanda_residencial_importado$Demanded_Gas[1:175]
+demanded_residencial_pre_pandemia
+
+date_residencial_pre_pandemia <- Demanda_residencial_importado$as.date[1:175]
+date_residencial_pre_pandemia 
+
+
+```
+
+
+
+```{r}
+residencal_pre_pandemia_frame <- data.frame(demanded_residencial_pre_pandemia, date_residencial_pre_pandemia)
+head(residencal_pre_pandemia_frame)
+
+tail(residencal_pre_pandemia_frame)
+```
+
+```{r}
+Demanda_residencial_importado_pre.ts<- ts(residencal_pre_pandemia_frame$demanded_residencial_pre_pandemia, frequency = 12, start =c(2005,1))
+
+
+typeof(Demanda_residencial_importado_pre.ts)
+dim(Demanda_residencial_importado_pre.ts)
+plot(Demanda_residencial_importado_pre.ts)
+```
+
+
+
+
+Then we plot the 'original demanded gas in electric time series'
+```{r}
+plot(Demanda_residencial_importado.ts, col = "violet", main = "Demanda residencial 'original' ")
+
+```
+
+
+REMOVIENDO LOS NAs de Demanda_residencial_importado.ts
+```{r}
+
+Demanda_residencial_importado.ts <- na.omit(Demanda_residencial_importado.ts)
+Demanda_residencial_importado.ts
+```
+
+
+
+#### Aplicaicón de modelo lineal para Demanda_residencial
+
+Separamos la data XE:Demanda_electrico de 2015 a 2022 y YY:Temperatura promedio 
+
+```{r}
+XR <- Demanda_residencial_importado$Demanded_Gas[118:213]
+XR
+```
+
+
+```{r}
+XR <- as.matrix(c(XR), nrow=96, ncol=1)
+XR
+
+TT <- as.matrix(c(TT),nrow=96, ncol=1)
+TT
+
+```
+
+
+Construimos como tal el data.Frame
+
+```{r}
+TabData_residencial <- cbind(TT,XE)
+colnames(TabData_residencial) <- c("Temperature","Demanda_residencial")
+
+##Conviritiendo en data.frame
+TabData_frame_residencial<- as.data.frame(TabData_residencial)
+TabData_frame_residencial
+
+plot(TabData_frame_residencial$Demanda_electrico,TabData_frame_residencial$Temperatura, pch = 16, cex= 1.5, xlab="Temperatura", ylab="Demanda_residencial")
+     
+```
+
+
+
+Viendo la correlación entre las variables
+
+
+
+```{r}
+TabData_frame_residencial <- na.omit(TabData_frame_residencial)
+```
+
+
+
+
+```{r}
+cor(TabData_frame_residencial)
+```
+
+
+#### Vamos a ajustar el modelo lineal
+```{r}
+modelo_lineal_residencial <- lm(TabData_frame_residencial$Demanda_residencial ~1 + TabData_frame_electrico$Temperature)
+modelo_lineal_residencial
+```
+
+#### Analizando el modelo lineal 
+
+```{r}
+summary(modelo_lineal_residencial)
+```
+
+#### Diagnostico de residuales
+
+```{r}
+plot(modelo_lineal_residencial)
+```
+
+
+
+
+
