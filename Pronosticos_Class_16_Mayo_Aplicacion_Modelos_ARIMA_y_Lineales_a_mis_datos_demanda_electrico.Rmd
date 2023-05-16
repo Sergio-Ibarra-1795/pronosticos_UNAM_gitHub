@@ -1,12 +1,12 @@
 ---
-title: "Pronosticos_Class_9_Mayo_Aplicacion_Modelos_ARIMA_y_Lineales_a_mis_datos"
+title: "Pronosticos_Class_16_Mayo_Aplicacion_Modelos_ARIMA_y_Lineales_a_mis_datos_demanda_electrico"
 author: "Sergi"
 date: "2023-02-27"
 output: html_document
 ---
 
 
-## Aplicación de métodos de pronóstico lineales a la series de tiempo de A) Demanda_electrico y B )Demanda_residencial   
+## Aplicación de métodos de pronóstico lineales y de ARIMA a la series de tiempo de Demanda_electrico    
 
 ```{r}
 
@@ -27,7 +27,7 @@ library(hydroGOF)
 
 ## Empezeos el análisis con los datos de Demanda_electrico
 
-We first import our data 
+Primero importamos la data con el gas demandado en el sector electrico
 ```{r}
 #URL HPi5
 #Demanda_electrico_importado<-read.csv("C:\\Users\\llell\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM_HPi5\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
@@ -41,7 +41,7 @@ Demanda_electrico_importado<-read.csv("Demanda_electrico_2022_full1.csv", header
 ```
 
 
-We checked the importing has worked 
+Nos aseguramos que la data con el gas demandado en el sector electrico se haya importado correctamente
 ```{r}
 head(Demanda_electrico_importado)
 summary(Demanda_electrico_importado)
@@ -51,7 +51,7 @@ dim(Demanda_electrico_importado)
 
 
 
-We change column Date in a data type of data by transforming our 'original' Date columns into an as.date column 
+Transformamos el tipo de dato de la columna DATE  a as.date column 
 
 ```{r}
 Demanda_electrico_importado$Date <- as.Date(Demanda_electrico_importado$Date, format = "%m/%d/%Y")
@@ -63,7 +63,7 @@ dim(Demanda_electrico_importado)
 ```
 
 
-#### Serie de tiempo de los datos de Demanda_electrico
+#### Convertimos los datos de Demanda_electrico a Serie de tiempo 
 
 ```{r}
 Demanda_electrico_importado.ts<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1))
@@ -83,7 +83,7 @@ plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'ori
 
 
 
-#### Separamos el df Demanda_electrico_importado en data sets training y  testing  
+#### Separamos el df Demanda_electrico_importado en data sets train y test
 
 
 ```{r}
@@ -386,7 +386,7 @@ cat("El RMSE de modelo lineal generalizado con PIB y Poblacion para los datos de
 ```
 
 
-## Modelo ARIMA para Demanda electrico
+## Modelo SARIMA para Demanda electrico
 
 
 #### Determinación de ACF & PACF para el caso de la data de demanda del sector eléctrico (SIN ESTACIONALIZAR)
@@ -395,7 +395,7 @@ cat("El RMSE de modelo lineal generalizado con PIB y Poblacion para los datos de
 #install.packages("forecast")
 library(forecast)
 
-par(mfrow=c(2,1))
+#par(mfrow=c(2,1))
 
 acf_demanda_electrico_sin_diferencia <- Acf(Demanda_electrico_importado.ts, lag.max = 100, ci.type = "ma")
 acf_demanda_electrico_sin_diferencia
@@ -442,7 +442,7 @@ print(Demanda_electrico_diferencia1)
 ```{r}
 library(forecast)
 
-par(mfrow=c(2,1))
+#par(mfrow=c(2,1))
 
 acf_demanda_electrico_diferencia1 <- Acf(Demanda_electrico_diferencia1, lag.max = 100, ci.type = "ma")
 acf_demanda_electrico_diferencia1
@@ -460,18 +460,17 @@ pacf_demanda_electrico_diferencia1
 library(urca)
 
 # Perform ADF test for stationarity
-adf_test_electrico_sin_diferenciar <- ur.df(Demanda_electrico_importado.ts)
+adf_test_electrico_diferencia1 <- ur.df(Demanda_electrico_diferencia1)
 
 # Print the ADF test results
-summary(adf_test_electrico_sin_diferenciar)
+summary(adf_test_electrico_diferencia1)
 
 ```
 
 
 
 
-
-##### Training and testing sets para aplicar ARIMA  
+#### Training and testing sets para aplicar modeo SARIMA  
 
 
 ```{r}
@@ -480,8 +479,8 @@ summary(adf_test_electrico_sin_diferenciar)
 
 
 # Subset the data to keep rows from the beginning until train_end and all columns
-Demanda_electrico_differencia_train <- Demanda_electrico_diferencia[1:201]
-Demanda_electrico_differencia_train
+Demanda_electrico_sin_differencia_train <- Demanda_electrico_importado.ts[1:201]
+Demanda_electrico_sin_differencia_train
 
 
 
@@ -491,53 +490,44 @@ Demanda_electrico_differencia_train
 # Subset the data to keep rows from the beginning until train_end and all columns
 
 
-Demanda_electrico_differencia_test <- Demanda_electrico_diferencia[202:211]
-Demanda_electrico_differencia_test
+Demanda_electrico_sin_differencia_test <- Demanda_electrico_importado.ts[202:213]
+Demanda_electrico_sin_differencia_test
 
 
 
 ```
 
+#### Ajustae y predicicon de Demanda_electrico con modelo SARIMA 
 
 
 ```{r}
-library(forecast)
+#install.packages("astsa")
+library(astsa)
 
-# Fit the ARIMA model
-ARIMA_Demanda_electrico_1_0_1 <- Arima(Demanda_electrico_differencia_train, order=c(1,0,1))
+# Fit the SARIMA model
+SARIMA_1_1_1_Demanda_electrico <- astsa::sarima(Demanda_electrico_sin_differencia_train, p=1, d=1, q=1)
 
 # Print the model summary
-summary(ARIMA_Demanda_electrico_1_0_1)
+summary(SARIMA_1_1_1_Demanda_electrico)
 
 ```
+
+
 
 
 
 ```{r}
 
 
-# Get the predictors and residuals
-predictions_ARIMA_Demanda_electrico_1_0_1 <- predict(ARIMA_Demanda_electrico_1_0_1, n.ahead = length(Demanda_electrico_differencia_test))
+# Get the predictors
 
 
-predictions_ARIMA_Demanda_electrico_1_0_1 <- as.numeric(unlist(predictions_ARIMA_Demanda_electrico_1_0_1))
-
-print(predictions_ARIMA_Demanda_electrico_1_0_1)
+pred_SARIMA_1_1_1_Demanda_electrico <- sarima.for(Demanda_electrico_sin_differencia_train, n.ahead=12,1,1,1)
+pred_SARIMA_1_1_1_Demanda_electrico
 
 
 ```
 
-
-```{r}
-Demanda_electrico_differencia_test <- as.numeric(Demanda_electrico_differencia_test)
-predictions_ARIMA_Demanda_electrico_1_0_1 <- as.numeric(predictions_ARIMA_Demanda_electrico_1_0_1)
-
-
-residuals_ARIMA_Demanda_electrico_1_0_1 <- unlist(Demanda_electrico_differencia_test) - unlist(predictions_ARIMA_Demanda_electrico_1_0_1)
-
-print(residuals_ARIMA_Demanda_electrico_1_0_1)
-
-```
 
 
 
