@@ -92,8 +92,10 @@ plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'ori
 
 
 # Subset the data to keep rows from the beginning until train_end and all columns
-Demanda_electrico_importado_train <- Demanda_electrico_importado[1:201]
-Demanda_electrico_importado_train
+Demanda_electrico_importado_train <- Demanda_electrico_importado[1:201,]
+head(Demanda_electrico_importado_train)
+tail(Demanda_electrico_importado_train)
+dim(Demanda_electrico_importado_train)
 
 
 
@@ -103,8 +105,9 @@ Demanda_electrico_importado_train
 # Subset the data to keep rows from the beginning until train_end and all columns
 
 
-Demanda_electrico_importado_test <- Demanda_electrico_importado[202:211]
-Demanda_electrico_importado_test
+Demanda_electrico_importado_test <- Demanda_electrico_importado[202:213,]
+head(Demanda_electrico_importado_test)
+dim(Demanda_electrico_importado_test)
 
 
 
@@ -113,77 +116,101 @@ Demanda_electrico_importado_test
 
 
 
-### Ahora intentemos ajustar un modelo lineal generalizado para la Demanda de gas natural en el sector electrico 
+### Ahora intentemos ajustar un 'modelo lineal generalizado simple' para la Demanda de gas natural en el sector electrico 
 
 
 ```{r}
 tend <- c(1:213)
 
-dim(tend)
+dim(tend_train)
 
 mes=c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
 
-rep_mes <- rep(mes,17)
+rep_mes <- rep(mes,18)
 
 
-rep_mes <-rep_mes[1:213] 
-dim(rep_mes)
 
-Demanda_electrico_frame <- data.frame(Demanda_electrico_importado,rep_mes,tend)
-Demanda_electrico_frame
+Demanda_electrico_train_frame <- data.frame(Demanda_electrico_importado_train,rep_mes[1:201],tend[1:201])
+head(Demanda_electrico_train_frame)
+tail(Demanda_electrico_train_frame)
+dim(Demanda_electrico_train_frame)
 
+```
+
+```{r}
+Demanda_electrico_train_frame$rep_mes <-Demanda_electrico_train_frame$rep_mes.1.201
+Demanda_electrico_train_frame$rep_mes.1.201. <- NULL
+Demanda_electrico_train_frame$tend <-Demanda_electrico_train_frame$tend.1.201.
+Demanda_electrico_train_frame$tend.1.201. <- NULL
+
+Demanda_electrico_train_frame
+```
+
+
+#### Se 'entrena' (en este caso, se define) al modelo lineal con los datos de train 
+
+```{r}
+demanda_electrico_lineal_simple1 <- glm (Demanded_Gas~1 + rep_mes + tend, data=Demanda_electrico_train_frame, family = gaussian())
+demanda_electrico_lineal_simple1
 ```
 
 
 ```{r}
-demanda_electrico_lineal_simple <- lm (Demanded_Gas~1 + rep_mes + tend, data=Demanda_electrico_frame)
-demanda_electrico_lineal_simple
+summary(demanda_electrico_lineal_simple1)
 ```
 ```{r}
-summary(demanda_electrico_lineal_simple)
+plot(demanda_electrico_lineal_simple1)
 ```
 
-##### Creamos el framework para predecir los siguientes 3 datos
+#### Se lleva a cabo el testeo del 'modelo lineal generalizado simple'  haciendo la predición de los datos de test 
+
+
 ```{r}
-rep_mes <- c("sep", "oct", "nov")
-tend <- c(214:216) 
-
-#predict_frame <- data.frame(Demanded_gas,rep_mes,tend )
-#predict_frame
 
 
-predict_frame <- data.frame(rep_mes,tend )
-predict_frame
-```
-```{r}
-prediccion_demanda_electrico_lineal_simple <- predict(demanda_electrico_lineal_simple,predict_frame, se.fit = TRUE )
-prediccion_demanda_electrico_lineal_simple
+Demanda_electrico_test_frame <- data.frame(Demanda_electrico_importado_test,rep_mes[202:213],tend[202:213])
+head(Demanda_electrico_test_frame)
+tail(Demanda_electrico_test_frame)
+dim(Demanda_electrico_test_frame)
+
 ```
 
-
-##### Los ultimos publicados por la SIE de datos reales de Demanda_electrico para los msese de Agosto, Sepy y Oct de 2022
 ```{r}
-valores_reales_electrico <-c(3260,3010, 3063)
+Demanda_electrico_test_frame$rep_mes <-Demanda_electrico_test_frame$rep_mes.202.213.
+Demanda_electrico_test_frame$rep_mes.202.213. <- NULL
+Demanda_electrico_test_frame$tend <-Demanda_electrico_test_frame$tend.202.213.
+Demanda_electrico_test_frame$tend.202.213. <- NULL
+
+Demanda_electrico_test_frame
 ```
 
 
 
-##### Calculo de errores del método lineal generalizado 'simple' para los datos de Demanda_electrico
 
 ```{r}
-valores_calculados_demanda_electrico_lineal_simple <- prediccion_demanda_electrico_lineal_simple$fit
+prediccion_demanda_electrico_lineal_simple1 <- predict(demanda_electrico_lineal_simple1, newdata = Demanda_electrico_test_frame, se.fit = TRUE)
+
+
+prediccion_demanda_electrico_lineal_simple1
+```
+
+
+#### Calculo de errores del 'modelo lineal generalizado simple' para los datos de Demanda_electrico
+
+```{r}
+valores_calculados_demanda_electrico_lineal_simple1 <- prediccion_demanda_electrico_lineal_simple1$fit
 
 # Calculate MAPE
-mape_electrico_lm_simple <- mean(abs((valores_reales_electrico - valores_calculados_demanda_electrico_lineal_simple) / valores_reales_electrico)) * 100
-cat("The MAPE is:", round(mape_electrico_lm_simple,2),"%\n")
+mape_electrico_lm_simple1 <- mean(abs((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_simple1) / Demanda_electrico_importado$Demanded_Gas[202:213])) * 100
+cat("The MAPE is:", round(mape_electrico_lm_simple1,2),"%\n")
 
 # Calculate RMSE
-rmse_electrico_lm_simple <- sqrt(mean((valores_reales_electrico - valores_calculados_demanda_electrico_lineal_simple)^2))
-cat("The RMSE is:", round(rmse_electrico_lm_simple,2),"\n")
+rmse_electrico_lm_simple1 <- sqrt(mean((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_simple1)^2))
+cat("The RMSE is:", round(rmse_electrico_lm_simple1,2),"\n")
 ```
 
 
-#### Intentemos un modelo lineal simple de Demanda_electrico como función de la Temperatura 
+#### Intentemos un 'modelo lineal simple' de Demanda_electrico ahora como función de la Temperatura 
 
 ##### Importamos la data historica del clima 
 ```{r}
