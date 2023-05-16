@@ -311,6 +311,7 @@ dim(Demanda_electrico_importado_mas_datos_test)
 
 -Supuestos relacionados con los predictores-
 A. Correlacion lineal entre VD Y VIj
+ A.1 La variable VD y VIj son simetricas? (Es decir que en torno a la media la curva sea simetrica)
 B. VIj no linealmente dependientes 
 
 -Supuestos relacionados con los errores/residuos-
@@ -318,16 +319,92 @@ C. Normalidad de los errores
 D. No relación en los errores
 
 
-##### Viendo la correlación entre las variables Import_total_price_Dolares, PIB_Millones_de_Dolares , Poblacion_en_Mexico y Demanda_electrico
+##### Supuesto de linealidad A. Correlacion lineal entre VD Y VIj para el caso de Demanda_electrico
 
+Viendo la correlación entre las variables Import_total_price_Dolares, PIB_Millones_de_Dolares , Poblacion_en_Mexico y Demanda_electrico
 
 
 
 ```{r}
+#install.packages("corrplot")
+library(corrplot)
 cor_matrix_demanda_electrico <- cor(Demanda_electrico_importado_mas_datos_train[,2:5])
 cor_matrix_demanda_electrico
+corrplot(cor_matrix_demanda_electrico)
 
 ```
+
+
+###### Supuesto de linealidad A.1 Las variables VD y VIj son simetricas? (Es decir que en torno a la media la curva sea simetrica)
+
+-Para el caso de la VD 
+
+qqnorm - Toma los quantiles teoricos vs los de datos reales  
+
+```{r}
+qqnorm(Demanda_electrico_importado_mas_datos_train[,2], main="Demanded_electrico"); qqline(Demanda_electrico_importado_mas_datos_train[,2])
+```
+
+Hagamos la prueba de Anderson-D  para verificar normalidad de esa variable  (H0 indica que los datos SI SON NORMNALES)
+```{r}
+#install.packages("nortest")
+
+library(nortest)
+
+nortest::ad.test(Demanda_electrico_importado_mas_datos_train$Demanded_Gas)
+
+hist(Demanda_electrico_importado_mas_datos_train$Demanded_Gas)
+```
+
+
+La VD no ers normal, pero si APROXIMADAMENTE SIMETRICO 
+
+
+Podriamos HACER UNA TRANSFORMACION A LA VD para INTENTAR ACERCARNOS MÁS A LA SIMETRIA 
+```{r}
+nortest::ad.test(log(Demanda_electrico_importado_mas_datos_train$Demanded_Gas))
+
+hist(log(Demanda_electrico_importado_mas_datos_train$Demanded_Gas))
+```
+
+
+```{r}
+nortest::ad.test(sqrt(Demanda_electrico_importado_mas_datos_train$Demanded_Gas))
+
+hist(sqrt(Demanda_electrico_importado_mas_datos_train$Demanded_Gas))
+```
+
+
+
+-Para el caso de las VIj 
+
+qqnorm - Toma los quantiles teoricos vs los de datos reales  
+
+```{r}
+qqnorm(Demanda_electrico_importado_mas_datos_train[,5], main="Poblacion_en_Mexico"); qqline(Demanda_electrico_importado_mas_datos_train[,5])
+```
+
+
+Hagamos la prueba de Anderson-D  para verificar normalidad de esa variable  (H0 indica que los datos SI SON NORMNALES)
+```{r}
+#install.packages("nortest")
+
+library(nortest)
+
+nortest::ad.test(Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico)
+
+hist(Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico)
+```
+
+
+##### Uso de scatter.hist para ver la relacion lineal entre variables y además la distribución entre variables
+
+```{r}
+library(psych)
+
+scatter.hist(Demanda_electrico_importado_mas_datos_train$Demanded_Gas, Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico)
+```
+
 
 
 ##### Vamos a ajustar el modelo lineal de Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares
