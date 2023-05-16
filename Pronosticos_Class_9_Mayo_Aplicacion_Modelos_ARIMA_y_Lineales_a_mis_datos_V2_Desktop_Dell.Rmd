@@ -210,41 +210,12 @@ cat("The RMSE is:", round(rmse_electrico_lm_simple1,2),"\n")
 ```
 
 
-#### Intentemos un 'modelo lineal simple' de Demanda_electrico ahora como función de la Temperatura 
+#### Intentemos un 'modelo lineal simple' de Demanda_electrico ahora como función del precio de importacion de gas , PIB de Mexico y poblacion de mexico
 
-##### Importamos la data historica del clima 
-```{r}
-#URL HPi3
-Temperatura_historico_importado<-read.csv("Temperatura_Media_CDMX_pron.csv", header= TRUE)
-Temperatura_historico_importado
-
-```
-
-##### Separamos la data XE:Demanda_electrico de 2015 a 2022 y YY:Temperatura promedio 
-
-```{r}
-XE <- Demanda_electrico$Demanded_Gas[118:213]
-XE
-```
+Precio de Importación de gas natural: https://www.eia.gov/dnav/ng/hist/n9132mx3M.htm
 
 
-```{r}
-TT <- Temperatura_historico_importado$Temperature
-TT
-```
-
-
-
-```{r}
-XE <- as.matrix(c(XE), nrow=96, ncol=1)
-head(XE)
-tail(XE)
-
-TT <- as.matrix(c(TT),nrow=96, ncol=1)
-head(TT)
-tail(TT)
-
-```
+PIB Mexico: https://www.banxico.org.mx/SieInternet/consultarDirectorioInternetAction.do?sector=2&accion=consultarCuadro&idCuadro=CR201&locale=es
 
 
 ##### Construimos como tal el data.Frame para el modelo lineal de Demanda_electrico con la Temperatura 
