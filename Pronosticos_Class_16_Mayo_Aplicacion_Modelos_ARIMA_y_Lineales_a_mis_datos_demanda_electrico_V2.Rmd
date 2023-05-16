@@ -436,17 +436,21 @@ modelo_lineal_electrico_mas_datos1
 ```
 
 
+##### Reasignando nombres a las variables del glm1 de Demanda_electrico
+
 
 ```{r}
-# Modified GLM call with changed variable names
-new_formula <- as.formula(paste("Demanded_Gas + Poblacion_en_Mexico + PIB_Millones_de_Dolares",
-                               collapse = " + "))
+new_formula1 <- as.formula(paste("Demanded_Gas ~", paste("Poblacion_en_Mexico + PIB_Millones_de_Dolares", collapse = " + ")))
+new_formula1
 
-modelo_lineal_electrico_mas_datos1 <- glm(formula = new_formula,
+
+modelo_lineal_electrico_mas_datos1 <- glm(formula = new_formula1,
     data = Demanda_electrico_importado_mas_datos_train,
     family = gaussian(link = "identity"))
 
+modelo_lineal_electrico_mas_datos1
 ```
+
 
 
 ##### Analizando el modelo lineal Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares 
@@ -455,8 +459,10 @@ modelo_lineal_electrico_mas_datos1 <- glm(formula = new_formula,
 summary(modelo_lineal_electrico_mas_datos1)
 ```
 
+##### -Supuestos relacionados con los errores/residuos- Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares
 
-##### Diagnostico de residuales Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares
+C. Normalidad de los errores
+D. No relación en los errores
 
 ```{r}
 plot(modelo_lineal_electrico_mas_datos1)
@@ -515,11 +521,121 @@ summary(modelo_lineal_electrico_mas_datos2)
 ```
 
 
-##### Diagnostico de residuales Demanda_electrico con Poblacion_en_Mexico 
+##### Reasignando nombres al GLM2 de Demanda_electrico
+
+```{r}
+# Modified GLM call with changed variable names
+
+
+
+new_formula2 <- as.formula(paste("Demanded_Gas ~", paste("Poblacion_en_Mexico", collapse = " + ")))
+new_formula2
+
+
+modelo_lineal_electrico_mas_datos2 <- glm(formula = new_formula2,
+    data = Demanda_electrico_importado_mas_datos_train,
+    family = gaussian(link = "identity"))
+
+modelo_lineal_electrico_mas_datos2
+
+```
+
+
+
+##### -Supuestos relacionados con los errores/residuos- Demanda_electrico con Poblacion_en_Mexico 
+
+C. Normalidad de los errores
+D. No relación en los errores
+
 
 ```{r}
 plot(modelo_lineal_electrico_mas_datos2)
 ```
+
+
+##### El criterio  Bayesian information criterion (BIC) or Schwarz information criterion 
+
+When fitting models, it is possible to increase the maximum likelihood by adding parameters, but doing so may result in overfitting. Both BIC and AIC attempt to resolve this problem by introducing a penalty term for the number of parameters in the model; the penalty term is larger in BIC than in AIC for sample sizes greater than 7.[
+
+The BIC is formally defined a
+
+$${BIC} =k\ln(n)-2\ln({\widehat {L}}).\ }$$
+\hat L = the maximized value of the likelihood function of the model 
+
+{\displaystyle {\hat {L}}=p(x\mid {\widehat {\theta }},M)}, where 
+
+^{\displaystyle {\widehat {\theta }}} are the parameter values that maximize the likelihood function;
+
+x = the observed data;
+
+n = the number of data points in x, the number of observations, or equivalently, the sample size;
+
+k = the number of parameters estimated by the model. For example, in multiple linear regression, the estimated parameters are the intercept, the q slope parameters, and the constant variance of the errors
+
+ 
+Ones with lower BIC values are generally preferred
+
+
+```{r}
+BIC(modelo_lineal_electrico_mas_datos1)
+```
+
+
+
+```{r}
+BIC(modelo_lineal_electrico_mas_datos2)
+```
+
+
+
+##### El criterio  AIC
+
+Ones with lower AIC values are generally preferred
+
+
+```{r}
+AIC(modelo_lineal_electrico_mas_datos1)
+```
+
+
+```{r}
+AIC(modelo_lineal_electrico_mas_datos2)
+```
+
+
+#### Predicicon con modelo lineal Demanda_electrico con Poblacion_en_Mexico 
+```{r}
+
+
+prediccion_demanda_electrico_lineal_mas_datos2 <- predict(modelo_lineal_electrico_mas_datos2, newdata = Demanda_electrico_importado_mas_datos_test, se.fit = TRUE)
+
+
+prediccion_demanda_electrico_lineal_mas_datos2
+
+```
+
+
+```{r}
+plot(prediccion_demanda_electrico_lineal_mas_datos2$fit)
+```
+
+
+
+
+#### Calculo de errores del lineal Demanda_electrico con Poblacion_en_Mexico para los datos de Demanda_electrico
+
+```{r}
+valores_calculados_demanda_electrico_lineal_mas_datos_simple2 <- prediccion_demanda_electrico_lineal_mas_datos2$fit
+
+# Calculate MAPE
+mape_electrico_lm_mas_datos2 <- mean(abs((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_mas_datos_simple2) / Demanda_electrico_importado$Demanded_Gas[202:213])) * 100
+cat("El MAPE del 'modelo lineal generalizado con Poblacion para los datos de Demanda_electrico es:", round(mape_electrico_lm_mas_datos2,2),"%\n")
+
+# Calculate RMSE
+rmse_electrico_lm_mas_datos2 <- sqrt(mean((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_mas_datos_simple2)^2))
+cat("El RMSE de modelo lineal generalizado con Poblacion para los datos de Demanda_electrico es:", round(rmse_electrico_lm_mas_datos2,2),"\n")
+```
+
 
 
 
@@ -544,6 +660,7 @@ pacf_demanda_electrico_sin_diferencia
 ```
 
 
+#### Se lleva a cabo el tet de Dickey-Fulley The null hypothesis of DF test is that there is a unit root in an AR model, which implies that the data series is not stationary. 
 
 ```{r}
 # Install and load the "urca" package
@@ -649,7 +766,10 @@ summary(SARIMA_1_1_1_Demanda_electrico)
 
 ```
 
+The Ljung–Box test may be defined as:
 
+H0: The data are independently distributed (i.e. the correlations in the population from which the sample is taken are 0, so that any observed correlations in the data result from randomness of the sampling process).
+Ha: The data are not independently distributed; they exhibit serial correlation.
 
 
 
@@ -666,7 +786,26 @@ pred_SARIMA_1_1_1_Demanda_electrico
 ```
 
 
+```{r}
+pred_SARIMA_1_1_1_Demanda_electrico$pred
+```
 
 
+
+
+
+#### Calculo de errores del lineal Demanda_electrico con SARIMA
+
+```{r}
+valores_calculados_demanda_electrico_lineal_SARIMA_1_1_1 <- pred_SARIMA_1_1_1_Demanda_electrico$pred
+
+# Calculate MAPE
+mape_electrico_SARIMA_1_1_1 <- mean(abs((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_SARIMA_1_1_1) / Demanda_electrico_importado$Demanded_Gas[202:213])) * 100
+cat("El MAPE del modelo SARIMA (1,1,1) para los datos de Demanda_electrico es:", round(mape_electrico_SARIMA_1_1_1,2),"%\n")
+
+# Calculate RMSE
+rmse_electrico_SARIMA_1_1_1 <- sqrt(mean((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_SARIMA_1_1_1)^2))
+cat("El RMSE de modelo modelo SARIMA (1,1,1)  para los datos de Demanda_electrico es:", round(rmse_electrico_SARIMA_1_1_1,2),"\n")
+```
 
 
