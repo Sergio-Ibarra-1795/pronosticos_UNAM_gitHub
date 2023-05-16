@@ -1,5 +1,5 @@
 ---
-title: "Pronosticos_Class_16_Mayo_Aplicacion_Modelos_ARIMA_y_Lineales_a_mis_datos_demanda_electrico"
+title: "Pronosticos_Class_16_Mayo_Aplicacion_Modelos_ARIMA_y_Lineales_a_mis_datos_demanda_residencial"
 author: "Sergi"
 date: "2023-02-27"
 output: html_document
@@ -25,28 +25,23 @@ library(hydroGOF)
 ```
 
 
-## Empezeos el análisis con los datos de Demanda_electrico
+## Empezeos el análisis con los datos de Demanda_residencial
 
-Primero importamos la data con el gas demandado en el sector electrico
+Primero importamos la data con el gas demandado en el sector residencial
 ```{r}
-#URL HPi5
-#Demanda_electrico_importado<-read.csv("C:\\Users\\llell\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM_HPi5\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
-
-#URL HPi3
-#Demanda_electrico_importado<-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
 
 #URL DesktopDell
-Demanda_electrico_importado<-read.csv("Demanda_electrico_2022_full1.csv", header= TRUE)
+Demanda_residencial_importado<-read.csv("Demanda_residencial_2022_full1.csv", header= TRUE)
 
 ```
 
 
 Nos aseguramos que la data con el gas demandado en el sector electrico se haya importado correctamente
 ```{r}
-head(Demanda_electrico_importado)
-summary(Demanda_electrico_importado)
-typeof(Demanda_electrico_importado)
-dim(Demanda_electrico_importado)
+head(Demanda_residencial_importado)
+summary(Demanda_residencial_importado)
+typeof(Demanda_residencial_importado)
+dim(Demanda_residencial_importado)
 ```
 
 
@@ -54,36 +49,36 @@ dim(Demanda_electrico_importado)
 Transformamos el tipo de dato de la columna DATE  a as.date column 
 
 ```{r}
-Demanda_electrico_importado$Date <- as.Date(Demanda_electrico_importado$Date, format = "%m/%d/%Y")
-head(Demanda_electrico_importado)
-tail(Demanda_electrico_importado)
-typeof(Demanda_electrico_importado)
-dim(Demanda_electrico_importado)
+Demanda_residencial_importado$Date <- as.Date(Demanda_residencial_importado$Date, format = "%m/%d/%Y")
+head(Demanda_residencial_importado)
+tail(Demanda_residencial_importado)
+typeof(Demanda_residencial_importado)
+dim(Demanda_residencial_importado)
 
 ```
 
 
-#### Convertimos los datos de Demanda_electrico a Serie de tiempo 
+#### Convertimos los datos de Demanda_residencial a Serie de tiempo 
 
 ```{r}
-Demanda_electrico_importado.ts<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1))
-head(Demanda_electrico_importado.ts)
+Demanda_residencial_importado.ts<- ts(Demanda_residencial_importado$Demanded_Gas, frequency = 12, start =c(2005,1))
+head(Demanda_residencial_importado.ts)
 
-typeof(Demanda_electrico_importado.ts)
-dim(Demanda_electrico_importado.ts)
+typeof(Demanda_residencial_importado.ts)
+dim(Demanda_residencial_importado.ts)
 ```
 
 
 Then we plot the 'original demanded gas in electric time series'
 ```{r}
-plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'original' ")
+plot(Demanda_residencial_importado.ts, col = "brown", main = "Demanda residencial 'original' ")
 
 ```
 
 
 
 
-#### Separamos el df Demanda_electrico_importado en data sets train y test
+#### Separamos el df Demanda_residencial_importado en data sets train y test
 
 
 ```{r}
@@ -92,10 +87,10 @@ plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'ori
 
 
 # Subset the data to keep rows from the beginning until train_end and all columns
-Demanda_electrico_importado_train <- Demanda_electrico_importado[1:201,]
-head(Demanda_electrico_importado_train)
-tail(Demanda_electrico_importado_train)
-dim(Demanda_electrico_importado_train)
+Demanda_residencial_importado_train <- Demanda_residencial_importado[1:201,]
+head(Demanda_residencial_importado_train)
+tail(Demanda_residencial_importado_train)
+dim(Demanda_residencial_importado_train)
 
 
 
@@ -105,9 +100,9 @@ dim(Demanda_electrico_importado_train)
 # Subset the data to keep rows from the beginning until train_end and all columns
 
 
-Demanda_electrico_importado_test <- Demanda_electrico_importado[202:213,]
-head(Demanda_electrico_importado_test)
-dim(Demanda_electrico_importado_test)
+Demanda_residencial_importado_test <- Demanda_residencial_importado[202:213,]
+head(Demanda_residencial_importado_test)
+dim(Demanda_residencial_importado_test)
 
 
 
@@ -130,36 +125,39 @@ rep_mes <- rep(mes,18)
 
 
 
-Demanda_electrico_train_frame <- data.frame(Demanda_electrico_importado_train,rep_mes[1:201],tend[1:201])
-head(Demanda_electrico_train_frame)
-tail(Demanda_electrico_train_frame)
-dim(Demanda_electrico_train_frame)
+Demanda_residencial_train_frame <- data.frame(Demanda_residencial_importado_train,rep_mes[1:201],tend[1:201])
+head(Demanda_residencial_train_frame)
+tail(Demanda_residencial_train_frame)
+dim(Demanda_residencial_train_frame)
 
 ```
 
 ```{r}
-Demanda_electrico_train_frame$rep_mes <-Demanda_electrico_train_frame$rep_mes.1.201
-Demanda_electrico_train_frame$rep_mes.1.201. <- NULL
-Demanda_electrico_train_frame$tend <-Demanda_electrico_train_frame$tend.1.201.
-Demanda_electrico_train_frame$tend.1.201. <- NULL
+Demanda_residencial_train_frame$rep_mes <-Demanda_residencial_train_frame$rep_mes.1.201
+Demanda_residencial_train_frame$rep_mes.1.201. <- NULL
+Demanda_residencial_train_frame$tend <-Demanda_residencial_train_frame$tend.1.201.
+Demanda_residencial_train_frame$tend.1.201. <- NULL
 
-Demanda_electrico_train_frame
+Demanda_residencial_train_frame
 ```
 
 
 #### Se 'entrena' (en este caso, se define) al modelo lineal con los datos de train 
 
 ```{r}
-demanda_electrico_lineal_simple1 <- glm (Demanded_Gas~1 + rep_mes + tend, data=Demanda_electrico_train_frame, family = gaussian())
-demanda_electrico_lineal_simple1
+demanda_residencial_lineal_simple1 <- glm (Demanded_Gas ~ rep_mes + tend, data=Demanda_residencial_train_frame, family = gaussian())
+demanda_residencial_lineal_simple1
 ```
 
 
 ```{r}
-summary(demanda_electrico_lineal_simple1)
+summary(demanda_residencial_lineal_simple1)
+
 ```
+
+
 ```{r}
-plot(demanda_electrico_lineal_simple1)
+plot(demanda_residencial_lineal_simple1)
 ```
 
 #### Testeo del 'modelo lineal generalizado simple'  haciendo la predición de los datos de test 
@@ -168,56 +166,53 @@ plot(demanda_electrico_lineal_simple1)
 ```{r}
 
 
-Demanda_electrico_test_frame <- data.frame(Demanda_electrico_importado_test,rep_mes[202:213],tend[202:213])
-head(Demanda_electrico_test_frame)
-tail(Demanda_electrico_test_frame)
-dim(Demanda_electrico_test_frame)
+Demanda_residencial_test_frame <- data.frame(Demanda_residencial_importado_test,rep_mes[202:213],tend[202:213])
+head(Demanda_residencial_test_frame)
+tail(Demanda_residencial_test_frame)
+dim(Demanda_residencial_test_frame)
 
 ```
 
 ```{r}
-Demanda_electrico_test_frame$rep_mes <-Demanda_electrico_test_frame$rep_mes.202.213.
-Demanda_electrico_test_frame$rep_mes.202.213. <- NULL
-Demanda_electrico_test_frame$tend <-Demanda_electrico_test_frame$tend.202.213.
-Demanda_electrico_test_frame$tend.202.213. <- NULL
+Demanda_residencial_test_frame$rep_mes <-Demanda_residencial_test_frame$rep_mes.202.213.
+Demanda_residencial_test_frame$rep_mes.202.213. <- NULL
+Demanda_residencial_test_frame$tend <-Demanda_residencial_test_frame$tend.202.213.
+Demanda_residencial_test_frame$tend.202.213. <- NULL
 
-Demanda_electrico_test_frame
-```
-
-
-
-
-```{r}
-prediccion_demanda_electrico_lineal_simple1 <- predict(demanda_electrico_lineal_simple1, newdata = Demanda_electrico_test_frame, se.fit = TRUE)
-
-
-prediccion_demanda_electrico_lineal_simple1
-```
-
-```{r}
-plot(prediccion_demanda_electrico_lineal_simple1$fit)
+Demanda_residencial_test_frame
 ```
 
 
 
 
+```{r}
+prediccion_demanda_residencial_lineal_simple1 <- predict(demanda_residencial_lineal_simple1, newdata = Demanda_residencial_test_frame, se.fit = TRUE)
 
-#### Calculo de errores del 'modelo lineal generalizado simple' para los datos de Demanda_electrico
+
+prediccion_demanda_residencial_lineal_simple1
+```
 
 ```{r}
-valores_calculados_demanda_electrico_lineal_simple1 <- prediccion_demanda_electrico_lineal_simple1$fit
+plot(prediccion_demanda_residencial_lineal_simple1$fit)
+```
+
+
+
+
+
+#### Calculo de errores del 'modelo lineal generalizado simple' para los datos de Demanda_residencial
+
+```{r}
+valores_calculados_demanda_residencial_lineal_simple1 <- prediccion_demanda_residencial_lineal_simple1$fit
 
 # Calculate MAPE
-mape_electrico_lm_simple1 <- mean(abs((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_simple1) / Demanda_electrico_importado$Demanded_Gas[202:213])) * 100
-cat("El MAPE del 'modelo lineal generalizado simple' para los datos de Demanda_electrico es:", round(mape_electrico_lm_simple1,2),"%\n")
+mape_residencial_lm_simple1 <- mean(abs((Demanda_residencial_importado$Demanded_Gas[202:213] - valores_calculados_demanda_residencial_lineal_simple1) / Demanda_residencial_importado$Demanded_Gas[202:213])) * 100
+cat("El MAPE del 'modelo lineal generalizado simple' para los datos de Demanda_residencial es:", round(mape_residencial_lm_simple1,2),"%\n")
 
 # Calculate RMSE
-rmse_electrico_lm_simple1 <- sqrt(mean((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_simple1)^2))
-cat("El RMSE 'modelo lineal generalizado simple' para los datos de Demanda_electrico es:", round(rmse_electrico_lm_simple1,2),"\n")
+rmse_residencial_lm_simple1 <- sqrt(mean((Demanda_residencial_importado$Demanded_Gas[202:213] - valores_calculados_demanda_residencial_lineal_simple1)^2))
+cat("El RMSE 'modelo lineal generalizado simple' para los datos de Demanda_residencial es:", round(rmse_residencial_lm_simple1,2),"\n")
 ```
-
-
-
 
 
 
