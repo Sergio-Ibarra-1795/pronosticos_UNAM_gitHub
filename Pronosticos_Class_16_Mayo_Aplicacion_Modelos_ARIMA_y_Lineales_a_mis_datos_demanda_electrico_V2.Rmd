@@ -234,8 +234,6 @@ Poblacion en México: https://www.inegi.org.mx/app/areasgeograficas/#tabMCcollap
 
 
 
-##### Construimos como tal el data.Frame para el modelo lineal de Demanda_electrico con la Temperatura 
-
 
 ```{r}
 #URL DesktopDell
@@ -405,19 +403,43 @@ library(psych)
 scatter.hist(Demanda_electrico_importado_mas_datos_train$Demanded_Gas, Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico)
 ```
 
-
-
-##### Vamos a ajustar el modelo lineal de Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares
+Intentemos hacer transformación de los datos para ver como cambia (si es el caso) la relación lineal y la distribución determinada de un par de variables  
 
 ```{r}
-modelo_lineal_electrico_mas_datos1 <- glm(Demanda_electrico_importado_mas_datos_train$Demanded_Gas ~1 + Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico + Demanda_electrico_importado_mas_datos_train$PIB_Millones_de_Dolares, family = gaussian(link="identity"))
+library(psych)
+
+scatter.hist(Demanda_electrico_importado_mas_datos_train$Demanded_Gas, sqrt(Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico))
+```
+
+##### Supuesto de linealidad B. VIj no linealmente dependientes 
+
+pairs.panels de psych me permite ver todas esas relaciones juntas
+
+```{r}
+library(psych)
+
+pairs.panels(Demanda_electrico_importado_mas_datos_train)
+```
+
+```{r}
+summary(Demanda_electrico_importado_mas_datos_train)
+```
+
+
+
+##### Vamos a ajustar un modelo lineal de Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares (family = gaussian(link="identity"))
+
+```{r}
+modelo_lineal_electrico_mas_datos1 <- glm(Demanda_electrico_importado_mas_datos_train$Demanded_Gas ~ Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico + Demanda_electrico_importado_mas_datos_train$PIB_Millones_de_Dolares, family = gaussian(link="identity"))
 
 modelo_lineal_electrico_mas_datos1
 ```
 
+
+
 ```{r}
 # Modified GLM call with changed variable names
-new_formula <- as.formula(paste("Demanded_Gas ~ 1 + Poblacion_en_Mexico + PIB_Millones_de_Dolares",
+new_formula <- as.formula(paste("Demanded_Gas + Poblacion_en_Mexico + PIB_Millones_de_Dolares",
                                collapse = " + "))
 
 modelo_lineal_electrico_mas_datos1 <- glm(formula = new_formula,
@@ -432,6 +454,7 @@ modelo_lineal_electrico_mas_datos1 <- glm(formula = new_formula,
 ```{r}
 summary(modelo_lineal_electrico_mas_datos1)
 ```
+
 
 ##### Diagnostico de residuales Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares
 
@@ -473,6 +496,31 @@ cat("El MAPE del 'modelo lineal generalizado con PIB y Poblacion para los datos 
 rmse_electrico_lm_mas_datos1 <- sqrt(mean((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_mas_datos1_simple1)^2))
 cat("El RMSE de modelo lineal generalizado con PIB y Poblacion para los datos de Demanda_electrico es:", round(rmse_electrico_lm_mas_datos1,2),"\n")
 ```
+
+
+
+##### Vamos a ajustar un modelo lineal de Demanda_electrico con Poblacion_en_Mexico SIN PIB_Millones_de_Dolares (family = gaussian(link="identity"))
+
+```{r}
+modelo_lineal_electrico_mas_datos2 <- glm(Demanda_electrico_importado_mas_datos_train$Demanded_Gas ~ Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico , family = gaussian(link="identity"))
+
+modelo_lineal_electrico_mas_datos2
+```
+
+
+##### Analizando el modelo lineal Demanda_electrico con Poblacion_en_Mexico  
+
+```{r}
+summary(modelo_lineal_electrico_mas_datos2)
+```
+
+
+##### Diagnostico de residuales Demanda_electrico con Poblacion_en_Mexico 
+
+```{r}
+plot(modelo_lineal_electrico_mas_datos2)
+```
+
 
 
 ## Modelo SARIMA para Demanda electrico
