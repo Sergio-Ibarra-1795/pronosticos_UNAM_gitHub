@@ -116,7 +116,7 @@ dim(Demanda_electrico_importado_test)
 
 
 
-### Ahora intentemos ajustar un 'modelo lineal generalizado simple' para la Demanda de gas natural en el sector electrico 
+## Ahora intentemos ajustar un 'modelo lineal generalizado simple' para la Demanda de gas natural en el sector electrico 
 
 
 ```{r}
@@ -162,7 +162,7 @@ summary(demanda_electrico_lineal_simple1)
 plot(demanda_electrico_lineal_simple1)
 ```
 
-#### Se lleva a cabo el testeo del 'modelo lineal generalizado simple'  haciendo la predición de los datos de test 
+#### Testeo del 'modelo lineal generalizado simple'  haciendo la predición de los datos de test 
 
 
 ```{r}
@@ -210,82 +210,141 @@ cat("The RMSE is:", round(rmse_electrico_lm_simple1,2),"\n")
 ```
 
 
-#### Intentemos un 'modelo lineal simple' de Demanda_electrico ahora como función del precio de importacion de gas , PIB de Mexico y poblacion de mexico
+## Intentemos un 'modelo lineal simple' de Demanda_electrico ahora como función del precio de importacion de gas , PIB de Mexico y poblacion de mexico
 
 Precio de Importación de gas natural: https://www.eia.gov/dnav/ng/hist/n9132mx3M.htm
 
-
 PIB Mexico: https://www.banxico.org.mx/SieInternet/consultarDirectorioInternetAction.do?sector=2&accion=consultarCuadro&idCuadro=CR201&locale=es
+
+Poblacion en México: https://www.inegi.org.mx/app/areasgeograficas/#tabMCcollapse-Indicadores
+
 
 
 ##### Construimos como tal el data.Frame para el modelo lineal de Demanda_electrico con la Temperatura 
 
 
 ```{r}
-Electrico_Demanda_y_Tem_Frame <- cbind(TT,XE)
-colnames(Electrico_Demanda_y_Tem_Frame) <- c("Temperature","Demanda_electrico")
+#URL DesktopDell
 
-##Conviritiendo en data.frame
-Electrico_Demanda_y_Tem_Frame<- as.data.frame(Electrico_Demanda_y_Tem_Frame)
-Electrico_Demanda_y_Tem_Frame
+Demanda_electrico_importado_mas_datos <- read.csv("Demanda_electrico_2022_mas_datos_full1_resumen.csv", header = TRUE, encoding = "UTF-8")
 
-plot(Electrico_Demanda_y_Tem_Frame$Demanda_electrico,Electrico_Demanda_y_Tem_Frame$Temperatura, pch = 16, cex= 1.5, xlab="Temperatura", ylab="Demanda_electrico")
-     
 ```
 
-
-
-##### Viendo la correlación entre las variables Temperatura y Demanda_electrico
-
-
 ```{r}
-Electrico_Demanda_y_Tem_Frame <- na.omit(Electrico_Demanda_y_Tem_Frame)
+head(Demanda_electrico_importado_mas_datos)
+summary(Demanda_electrico_importado_mas_datos)
+typeof(Demanda_electrico_importado_mas_datos)
+dim(Demanda_electrico_importado_mas_datos)
 ```
 
 
 ```{r}
-cor(Electrico_Demanda_y_Tem_Frame)
+Demanda_electrico_importado_mas_datos$Date <- as.Date(Demanda_electrico_importado_mas_datos$Date, format = "%m/%d/%Y")
+head(Demanda_electrico_importado_mas_datos)
+tail(Demanda_electrico_importado_mas_datos)
+typeof(Demanda_electrico_importado_mas_datos)
+dim(Demanda_electrico_importado_mas_datos)
+
+```
+
+```{r}
+Demanda_electrico_importado_mas_datosDemanded_Gas <- as.numeric(Demanda_electrico_importado_mas_datos$Demanded_Gas)
+
+Demanda_electrico_importado_mas_datos$Import_total_price_Dolares <- as.numeric(Demanda_electrico_importado_mas_datos$Import_total_price_Dolares)
+
+Demanda_electrico_importado_mas_datos$PIB_Millones_de_Dolares <- as.numeric(Demanda_electrico_importado_mas_datos$PIB_Millones_de_Dolares)
+
+Demanda_electrico_importado_mas_datos$Poblacion_en_Mexico <- as.numeric(Demanda_electrico_importado_mas_datos$Poblacion_en_Mexico)
+```
+
+
+
+#### Separamos el df Demanda_electrico_importado_mas_datos en data sets training y  testing  
+
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+Demanda_electrico_importado_mas_datos_train <- Demanda_electrico_importado_mas_datos[1:201,]
+head(Demanda_electrico_importado_mas_datos_train)
+tail(Demanda_electrico_importado_mas_datos_train)
+dim(Demanda_electrico_importado_mas_datos_train)
+
+
+
 ```
 
 
 ```{r}
-names(Electrico_Demanda_y_Tem_Frame)
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_importado_mas_datos_test <- Demanda_electrico_importado_mas_datos[202:213,]
+head(Demanda_electrico_importado_mas_datos_test)
+dim(Demanda_electrico_importado_mas_datos_test)
+
+
 
 ```
 
 
-##### Vamos a ajustar el modelo lineal de Demanda_electrico con Temperatura 
-```{r}
-modelo_lineal_electrico_y_Tem <- lm(Electrico_Demanda_y_Tem_Frame$Demanda_electrico ~1 + Electrico_Demanda_y_Tem_Frame$Temperature)
 
-modelo_lineal_electrico_y_Tem
-```
 
-##### Analizando el modelo lineal Demanda_electrico con Temperatura 
+##### Viendo la correlación entre las variables Import_total_price_Dolares, PIB_Millones_de_Dolares , Poblacion_en_Mexico y Demanda_electrico
+
+
 
 ```{r}
-summary(modelo_lineal_electrico_y_Tem)
-```
+cor_matrix_demanda_electrico <- cor(Demanda_electrico_importado_mas_datos_train[,2:5])
+cor_matrix_demanda_electrico
 
-##### Diagnostico de residuales Demanda_electrico con Temperatura 
-
-```{r}
-plot(modelo_lineal_electrico_y_Tem)
-```
-
-```{r}
-predict_frame_electrico_Temp <- predict_frame
-predict_frame_electrico_Temp$tend <-predict_frame_electrico_Temp$Temp
-predict_frame_electrico_Temp$Temp <-c(21,20,22)
-predict_frame_electrico_Temp
 ```
 
 
-#### Predicicon con modelo  lineal Demanda_electrico con Temperatura 
+##### Vamos a ajustar el modelo lineal de Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares
+
+```{r}
+modelo_lineal_electrico_mas_datos1 <- glm(Demanda_electrico_importado_mas_datos_train$Demanded_Gas ~1 + Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico + Demanda_electrico_importado_mas_datos_train$PIB_Millones_de_Dolares, family = gaussian(link="identity"))
+
+modelo_lineal_electrico_mas_datos1
+```
+
+```{r}
+# Modified GLM call with changed variable names
+new_formula <- as.formula(paste("Demanded_Gas ~ 1 + Poblacion_en_Mexico + PIB_Millones_de_Dolares",
+                               collapse = " + "))
+
+modelo_lineal_electrico_mas_datos1 <- glm(formula = new_formula,
+    data = Demanda_electrico_importado_mas_datos_train,
+    family = gaussian(link = "identity"))
+
+```
+
+
+##### Analizando el modelo lineal Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares 
+
+```{r}
+summary(modelo_lineal_electrico_mas_datos1)
+```
+
+##### Diagnostico de residuales Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares
+
+```{r}
+plot(modelo_lineal_electrico_mas_datos1)
+```
+
+
+#### Predicicon con modelo  lineal Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares
 ```{r}
 
-prediccion_demanda_electrico_lineal_electrico_y_Tem <- predict(modelo_lineal_electrico_y_Tem,predict_frame_electrico_Temp, se.fit = TRUE )
-prediccion_demanda_electrico_lineal_electrico_y_Tem
+
+prediccion_demanda_electrico_lineal_mas_datos1 <- predict(modelo_lineal_electrico_mas_datos1, newdata = Demanda_electrico_importado_mas_datos_test, se.fit = TRUE)
+
+
+prediccion_demanda_electrico_lineal_mas_datos1
 
 ```
 
