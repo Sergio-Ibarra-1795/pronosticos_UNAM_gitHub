@@ -6,7 +6,7 @@ output: html_document
 ---
 
 
-## Aplicación de métodos de pronóstico lineales y de ARIMA a la series de tiempo de A) Demanda_electrico y B )Demanda_residencial   
+## Aplicación de métodos de pronóstico lineales a la series de tiempo de A) Demanda_electrico y B )Demanda_residencial   
 
 ```{r}
 
@@ -62,7 +62,7 @@ dim(Demanda_electrico_importado)
 #### Serie de tiempo de los datos de Demanda_electrico
 
 ```{r}
-Demanda_electrico_importado.ts<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1), end =c(2022,8))
+Demanda_electrico_importado.ts<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1))
 head(Demanda_electrico_importado.ts)
 
 typeof(Demanda_electrico_importado.ts)
@@ -78,38 +78,7 @@ plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'ori
 
 
 
-
-##### Separamos la data de Demanda_electrico en train y test 
-
-```{r}
-
-# Split the data into training and testing sets
-
-
-# Subset the data to keep rows from the beginning until train_end and all columns
-Demanda_electrico_importado_train <- Demanda_electrico_importado[1:201]
-Demanda_electrico_importado_train
-
-
-
-```
-
-
-
-```{r}
-# Subset the data to keep rows from the beginning until train_end and all columns
-
-
-Demanda_electrico_importado_test <- Demanda_electrico_importado[202:213]
-Demanda_electrico_importado_test
-
-
-
-```
-
-
-
-### Ajuate de un "modelo lineal generalizado simple" para la Demanda de gas natural en el sector electrico 
+### Ahora intentemos ajustar un modelo lineal generalizado para la Demanda de gas natural en el sector electrico 
 
 
 ```{r}
@@ -132,30 +101,39 @@ Demanda_electrico_frame
 
 
 ```{r}
-demanda_electrico_lineal_simple1 <- lm (Demanded_Gas~1 + rep_mes + tend, data=Demanda_electrico_frame)
-demanda_electrico_lineal_simple1
+demanda_electrico_lineal_simple <- lm (Demanded_Gas~1 + rep_mes + tend, data=Demanda_electrico_frame)
+demanda_electrico_lineal_simple
 ```
 ```{r}
-summary(demanda_electrico_lineal_simple1)
+summary(demanda_electrico_lineal_simple)
 ```
 
-
-
-
+##### Creamos el framework para predecir los siguientes 3 datos
 ```{r}
-prediccion_demanda_electrico_lineal_simple1 <- predict(demanda_electrico_lineal_simple1,predict_frame, se.fit = TRUE )
+rep_mes <- c("sep", "oct", "nov")
+tend <- c(214:216) 
+
+#predict_frame <- data.frame(Demanded_gas,rep_mes,tend )
+#predict_frame
+
+
+predict_frame <- data.frame(rep_mes,tend )
+predict_frame
+```
+```{r}
+prediccion_demanda_electrico_lineal_simple <- predict(demanda_electrico_lineal_simple,predict_frame, se.fit = TRUE )
 prediccion_demanda_electrico_lineal_simple
 ```
 
 
-##### Se tiene los datos reales de la SIE  de Demanda_electrico para los msese de Agosto, Sepy y Oct de 2022 
+##### Los ultimos publicados por la SIE de datos reales de Demanda_electrico para los msese de Agosto, Sepy y Oct de 2022
 ```{r}
 valores_reales_electrico <-c(3260,3010, 3063)
 ```
 
 
 
-##### Calculo de errores del "modelo lineal generalizado simple"para los datos de Demanda_electrico
+##### Calculo de errores del método lineal generalizado 'simple' para los datos de Demanda_electrico
 
 ```{r}
 valores_calculados_demanda_electrico_lineal_simple <- prediccion_demanda_electrico_lineal_simple$fit
@@ -170,7 +148,7 @@ cat("The RMSE is:", round(rmse_electrico_lm_simple,2),"\n")
 ```
 
 
-#### Intentemos un modelo lineal de Demanda_electrico como función de la Temperatura 
+#### Intentemos un modelo lineal simple de Demanda_electrico como función de la Temperatura 
 
 ##### Importamos la data historica del clima 
 ```{r}
@@ -243,7 +221,7 @@ names(Electrico_Demanda_y_Tem_Frame)
 ```
 
 
-#### Vamos a ajustar el modelo lineal de Demanda_electrico con Temperatura 
+##### Vamos a ajustar el modelo lineal de Demanda_electrico con Temperatura 
 ```{r}
 modelo_lineal_electrico_y_Tem <- lm(Electrico_Demanda_y_Tem_Frame$Demanda_electrico ~1 + Electrico_Demanda_y_Tem_Frame$Temperature)
 
@@ -270,7 +248,7 @@ predict_frame_electrico_Temp
 ```
 
 
-##### Predicicon con modelo  lineal Demanda_electrico con Temperatura 
+#### Predicicon con modelo  lineal Demanda_electrico con Temperatura 
 ```{r}
 
 prediccion_demanda_electrico_lineal_electrico_y_Tem <- predict(modelo_lineal_electrico_y_Tem,predict_frame_electrico_Temp, se.fit = TRUE )
@@ -278,9 +256,9 @@ prediccion_demanda_electrico_lineal_electrico_y_Tem
 
 ```
 
-#### Ajuste de modelo ARIMA 
 
-##### Claculo de ACF & PACF para el caso de la data de demanda del sector eléctrico 
+
+#### Claculo de ACF & PACF para el caso de la data de demanda del sector eléctrico 
 
 ```{r}
 #  ACF (Autocorrelation function)
@@ -294,7 +272,7 @@ pacf_demanda_electrico_tot
 
 
 
-##### Determinación de ACF & PACF para el caso de la data de demanda del sector eléctrico 
+#### Determinación de ACF & PACF para el caso de la data de demanda del sector eléctrico 
 
 ```{r}
 #install.packages("forecast")
@@ -330,7 +308,7 @@ abline(h = c(0.2, -0.2), lty = 2, col = "red")
 ```
 
 
-####  'Diferenciación de la serie para hacerlo estacionaria'
+#### Vamos a 'diferenciar la serie para hacerlo estacionaria'
 
 ```{r}
 # Calculate the difference between consecutive elements
@@ -436,7 +414,7 @@ print(residuals_ARIMA_Demanda_electrico_1_0_1)
 
 
 
-## Ajuste de modelos para datos de Demanda_residencial
+## Ahora hagamoslo para los datos de Demanda_residencial
 
 
 We first import our data 
