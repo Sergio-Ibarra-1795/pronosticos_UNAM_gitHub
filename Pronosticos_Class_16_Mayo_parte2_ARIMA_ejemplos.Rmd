@@ -158,7 +158,20 @@ pacf(USAccDeaths_train)
 ```
 
 
-### Aplicamos un SARIMA (1,2,1)  
+#### Perform ADF test for stationarity for USAccDeaths_train sin diferenciar
+
+```{r}
+library(urca)
+
+# Perform ADF test for stationarity
+adf_USAccDeaths_train_sin_doferenciar <- ur.df(USAccDeaths_train)
+
+# Print the ADF test results
+summary(adf_USAccDeaths_train_sin_doferenciar)
+```
+
+
+### Aplicamos un SARIMA (0,0,2) for USAccDeaths_train
 
 ```{r}
 library(astsa)
@@ -173,7 +186,7 @@ summary(SARIMA_0_0_2_USAccDeaths)
 
 
 
-#### Predecimos con un SARIMA (0,0,2)  
+#### Predecimos con un SARIMA (0,0,2) for USAccDeaths_train
 
 
 ```{r}
@@ -190,8 +203,243 @@ pred_SARIMA_0_0_2_USAccDeaths$pred
 
 
 
-#### Aplicación de función ACCURACY  Calculo de errores  SARIMA (1,2,1) con euretail
+#### Aplicación de función ACCURACY  Calculo de errores  SARIMA (0,0,2) for USAccDeaths_test
 ```{r}
 accuracy(pred_SARIMA_0_0_2_USAccDeaths$pred,USAccDeaths_test )
 ```
 
+
+
+
+#### ACF & PACF de la serie  diferenciada 1 vez  for USAccDeaths_train
+
+```{r}
+
+USAccDeaths_train_diference1 <- diff(USAccDeaths_train, differences = 1)
+
+acf(USAccDeaths_train_diference1)
+pacf(USAccDeaths_train_diference1)
+```
+
+
+
+
+#### Perform ADF test for stationarity for USAccDeaths_train diferenciada 1 vez 
+
+```{r}
+library(urca)
+
+# Perform ADF test for stationarity
+adf_USAccDeaths_train_diferencia1 <- ur.df(USAccDeaths_train_diference1)
+
+# Print the ADF test results
+summary(adf_USAccDeaths_train_diferencia1)
+```
+
+
+
+### Aplicamos un SARIMA (1,1,1) for USAccDeaths_train
+
+```{r}
+library(astsa)
+
+# Fit the SARIMA model
+SARIMA_1_1_1_USAccDeaths <- astsa::sarima(USAccDeaths_train, p=1, d=1, q=1)
+
+# Print the model summary
+summary(SARIMA_1_1_1_USAccDeaths)
+
+```
+
+
+
+#### Predecimos con un SARIMA (1,1,1) for USAccDeaths_train
+
+
+```{r}
+# Get the predictors
+pred_SARIMA_1_1_1_USAccDeaths <- sarima.for(USAccDeaths_train, n.ahead=6,1,1,1)
+pred_SARIMA_1_1_1_USAccDeaths
+
+```
+
+
+
+#### Aplicación de función ACCURACY  Calculo de errores  SARIMA (1,1,1) for USAccDeaths_test
+```{r}
+accuracy(pred_SARIMA_1_1_1_USAccDeaths$pred,USAccDeaths_test )
+```
+
+
+
+
+
+
+### Aplicamos un SARIMA (0,1,2) for USAccDeaths_train
+
+```{r}
+library(astsa)
+
+# Fit the SARIMA model
+SARIMA_0_1_2_USAccDeaths <- astsa::sarima(USAccDeaths_train, p=0, d=1, q=2)
+
+# Print the model summary
+summary(SARIMA_0_1_2_USAccDeaths)
+
+```
+
+
+
+#### Predecimos con un SARIMA (0,1,2) for USAccDeaths_train
+
+
+```{r}
+# Get the predictors
+pred_SARIMA_0_1_2_USAccDeaths <- sarima.for(USAccDeaths_train, n.ahead=6,0,1,2)
+pred_SARIMA_0_1_2_USAccDeaths
+
+```
+
+
+
+#### Aplicación de función ACCURACY  Calculo de errores  SARIMA (0,1,2) for USAccDeaths_test
+```{r}
+accuracy(pred_SARIMA_0_1_2_USAccDeaths$pred,USAccDeaths_test )
+```
+
+
+
+
+
+## Aplicacion de un modelo lineal simple con "variables dummy "
+
+
+```{r}
+tend <- c(1:72)
+
+dim(tend)
+
+mes=c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
+
+rep_mes <- rep(mes,6)
+
+
+
+USAccDeaths_train_frame <- data.frame(USAccDeaths_train,rep_mes[1:66],tend[1:66])
+head(USAccDeaths_train_frame)
+tail(USAccDeaths_train_frame)
+
+
+```
+
+
+
+```{r}
+
+#USAccDeaths_train_frame$USAccDeaths <- USAccDeaths_train_frame$USAccDeaths_train
+#USAccDeaths_train_frame$USAccDeaths_train <- NULL
+
+# Assuming your data frame is named 'USAccDeaths_train_frame'
+# Rename the column from 'USAccDeaths_train' to 'USAccDeaths'
+colnames(USAccDeaths_train_frame)[colnames(USAccDeaths_train_frame) == "USAccDeaths_train"] <- "USAccDeaths"
+
+
+```
+
+```{r}
+USAccDeaths_train_frame <- data.frame(USAccDeaths_train_frame,rep_mes[1:66],tend[1:66])
+head(USAccDeaths_train_frame)
+tail(USAccDeaths_train_frame)
+```
+
+
+```{r}
+
+USAccDeaths_train_frame$rep_mes <-USAccDeaths_train_frame$rep_mes.1.66.
+USAccDeaths_train_frame$rep_mes.1.66. <- NULL
+USAccDeaths_train_frame$tend <-USAccDeaths_train_frame$tend.1.66.
+USAccDeaths_train_frame$tend.1.66. <- NULL
+
+
+USAccDeaths_train_frame
+```
+
+
+#### Se 'entrena' (en este caso, se define) al modelo lineal con los datos de train 
+
+```{r}
+USAccDeaths_simple1 <- glm (USAccDeaths_train ~ rep_mes + tend, data=USAccDeaths_train_frame, family = gaussian())
+USAccDeaths_simple1
+```
+
+```{r}
+summary(USAccDeaths_simple1)
+```
+
+```{r}
+plot(USAccDeaths_simple1)
+```
+
+
+
+
+
+#### Testeo del 'modelo lineal generalizado simple'  haciendo la predición de los datos de test 
+
+
+```{r}
+
+
+USAccDeaths_test_frame <- data.frame(USAccDeaths_test,rep_mes[67:72],tend[67:72])
+head(USAccDeaths_test_frame)
+tail(USAccDeaths_test_frame)
+
+
+```
+
+
+
+
+```{r}
+
+#USAccDeaths_train_frame$USAccDeaths <- USAccDeaths_train_frame$USAccDeaths_train
+#USAccDeaths_train_frame$USAccDeaths_train <- NULL
+
+# Assuming your data frame is named 'USAccDeaths_train_frame'
+# Rename the column from 'USAccDeaths_train' to 'USAccDeaths'
+colnames(USAccDeaths_test_frame)[colnames(USAccDeaths_test_frame) == "USAccDeaths_test"] <- "USAccDeaths"
+
+USAccDeaths_test_frame
+
+```
+
+
+```{r}
+
+USAccDeaths_test_frame$rep_mes <-USAccDeaths_test_frame$rep_mes.67.72.
+USAccDeaths_test_frame$rep_mes.67.72. <- NULL
+USAccDeaths_test_frame$tend <-USAccDeaths_test_frame$tend.67.72.
+USAccDeaths_test_frame$tend.67.72. <- NULL
+
+
+USAccDeaths_test_frame
+```
+
+
+
+
+#### Prediccion con el modelo simple de variables dummy para USAccDeaths
+
+
+```{r}
+prediccion_USAccDeaths_simple1 <- predict(USAccDeaths_simple1, newdata = USAccDeaths_test_frame, se.fit = TRUE)
+
+prediccion_USAccDeaths_simple1
+```
+
+
+#### Aplicación de función ACCURACY  Calculo de errores con modelo dummy 
+
+```{r}
+accuracy(prediccion_USAccDeaths_simple1$fit,USAccDeaths_test )
+```

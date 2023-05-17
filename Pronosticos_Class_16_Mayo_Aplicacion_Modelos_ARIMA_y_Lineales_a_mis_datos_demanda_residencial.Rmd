@@ -769,8 +769,6 @@ Ha: The data are not independently distributed; they exhibit serial correlation.
 
 
 ```{r}
-
-
 # Get the predictors
 
 
