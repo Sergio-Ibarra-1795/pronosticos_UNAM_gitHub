@@ -150,7 +150,7 @@ Demanda_electrico_train_frame
 #### Se 'entrena' (en este caso, se define) al modelo lineal con los datos de train 
 
 ```{r}
-demanda_electrico_lineal_simple1 <- glm (Demanded_Gas~1 + rep_mes + tend, data=Demanda_electrico_train_frame, family = gaussian())
+demanda_electrico_lineal_simple1 <- glm (Demanded_Gas ~  rep_mes + tend, data=Demanda_electrico_train_frame, family = gaussian(link = identity))
 demanda_electrico_lineal_simple1
 ```
 
@@ -158,6 +158,8 @@ demanda_electrico_lineal_simple1
 ```{r}
 summary(demanda_electrico_lineal_simple1)
 ```
+
+
 ```{r}
 plot(demanda_electrico_lineal_simple1)
 ```
@@ -174,6 +176,7 @@ tail(Demanda_electrico_test_frame)
 dim(Demanda_electrico_test_frame)
 
 ```
+
 
 ```{r}
 Demanda_electrico_test_frame$rep_mes <-Demanda_electrico_test_frame$rep_mes.202.213.
@@ -220,10 +223,6 @@ cat("El RMSE 'modelo lineal generalizado simple' para los datos de Demanda_elect
 
 
 
-
-
-
-
 ## Intentemos un 'modelo lineal simple' de Demanda_electrico ahora como función del precio de importacion de gas , PIB de Mexico y poblacion de mexico
 
 Precio de Importación de gas natural: https://www.eia.gov/dnav/ng/hist/n9132mx3M.htm
@@ -241,6 +240,8 @@ Poblacion en México: https://www.inegi.org.mx/app/areasgeograficas/#tabMCcollap
 Demanda_electrico_importado_mas_datos <- read.csv("Demanda_electrico_2022_mas_datos_full1_resumen.csv", header = TRUE, encoding = "UTF-8")
 
 ```
+
+
 
 ```{r}
 head(Demanda_electrico_importado_mas_datos)
@@ -307,8 +308,9 @@ dim(Demanda_electrico_importado_mas_datos_test)
 
 ##### Recordemos que los supuestos del modelo lineal son:
 
+
 -Supuestos relacionados con los predictores-
-A. Correlacion lineal entre VD Y VIj
+A. Correlacion lineal entre VD Y VIj 
  A.1 La variable VD y VIj son simetricas? (Es decir que en torno a la media la curva sea simetrica)
 B. VIj no linealmente dependientes 
 
@@ -465,6 +467,11 @@ C. Normalidad de los errores
 D. No relación en los errores
 
 ```{r}
+plot(Demanda_electrico_importado_mas_datos_train)
+```
+
+
+```{r}
 plot(modelo_lineal_electrico_mas_datos1)
 ```
 
@@ -540,6 +547,9 @@ modelo_lineal_electrico_mas_datos2
 
 ```
 
+```{r}
+summary(modelo_lineal_electrico_mas_datos2)
+```
 
 
 ##### -Supuestos relacionados con los errores/residuos- Demanda_electrico con Poblacion_en_Mexico 
@@ -551,6 +561,7 @@ D. No relación en los errores
 ```{r}
 plot(modelo_lineal_electrico_mas_datos2)
 ```
+OJO: SI ESTAN ASOCIADOS PERO LA RELACIÓN QUE SE GUARDA ENTRE ELLOS NO ES LINEAL!!!!
 
 
 ##### El criterio  Bayesian information criterion (BIC) or Schwarz information criterion 
@@ -765,6 +776,7 @@ SARIMA_1_1_1_Demanda_electrico <- astsa::sarima(Demanda_electrico_sin_differenci
 summary(SARIMA_1_1_1_Demanda_electrico)
 
 ```
+OJO EN LA DE Ljung-Box -DEBEN ESTAR ARRIBA, PARA VERIFIFCAR QUE LOS ERRORES NO ESTÉN ASOCIADOS ENTRE ELLOS (Se esperarian todos arriba del valor de p value)
 
 The Ljung–Box test may be defined as:
 
@@ -774,7 +786,6 @@ Ha: The data are not independently distributed; they exhibit serial correlation.
 
 
 ```{r}
-
 
 # Get the predictors
 
@@ -807,5 +818,7 @@ cat("El MAPE del modelo SARIMA (1,1,1) para los datos de Demanda_electrico es:",
 rmse_electrico_SARIMA_1_1_1 <- sqrt(mean((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_SARIMA_1_1_1)^2))
 cat("El RMSE de modelo modelo SARIMA (1,1,1)  para los datos de Demanda_electrico es:", round(rmse_electrico_SARIMA_1_1_1,2),"\n")
 ```
+
+
 
 
