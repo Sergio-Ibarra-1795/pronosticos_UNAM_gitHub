@@ -1,0 +1,197 @@
+---
+title: "Pronosticos_Class_16_Mayo_parte2_ARIMA_ejemplos"
+author: "Sergibar"
+date: "2023-05-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Aplicación de modelos ARIMA ejemplos
+
+
+#### Trabajamos con los datos de euretail en fpp
+
+```{r}
+install.packages("fpp")
+
+library("fpp")
+```
+
+```{r}
+data(euretail)
+plot(euretail)
+```
+
+
+
+#### Separamos en train y test
+
+```{r}
+eruretail_train <- euretail[1:56]
+eruretail_train
+
+eruretail_test <- euretail[57:64]
+eruretail_test
+```
+
+
+
+
+#### ACF & PACF de la serie sin diferenciar 
+
+```{r}
+acf(eruretail_train)
+pacf(eruretail_train)
+```
+
+
+
+
+
+#### ACF & PACF de la serie  diferenciada 1 vez  
+
+```{r}
+
+eruretail_train_diference1 <- diff(eruretail_train, differences = 1)
+
+acf(eruretail_train_diference1)
+pacf(eruretail_train_diference1)
+```
+
+
+
+#### ACF & PACF de la serie  diferenciada 2 vez  
+
+```{r}
+
+eruretail_train_diference2 <- diff(eruretail_train, differences = 2)
+
+acf(eruretail_train_diference2)
+pacf(eruretail_train_diference2)
+```
+
+### Aplicamos un SARIMA (1,2,1)  
+
+```{r}
+library(astsa)
+
+# Fit the SARIMA model
+SARIMA_1_2_1_euroretail <- astsa::sarima(eruretail_train, p=1, d=2, q=1)
+
+# Print the model summary
+summary(SARIMA_1_2_1_euroretail)
+
+```
+
+
+
+
+#### Predecimos con un SARIMA (1,2,1)  
+
+
+EN EL FORECAST NOS DA EL STANDAR ERROR CON L QUE SE PUEDEN CONSTRUIR LOS INTERVALOS DE CONFIANZA 
+
+```{r}
+# Get the predictors
+pred_SARIMA_1_2_1_euroretail <- sarima.for(eruretail_train, n.ahead=8,1,2,1)
+pred_SARIMA_1_2_1_euroretail
+
+```
+
+
+```{r}
+pred_SARIMA_1_2_1_euroretail$pred
+```
+
+
+
+#### Aplicación de función ACCURACY  Calculo de errores  SARIMA (1,2,1) con euretail
+```{r}
+accuracy(pred_SARIMA_1_2_1_euroretail$pred,eruretail_test )
+```
+
+
+## Para los datos de USAccDeaths
+
+```{r}
+data(USAccDeaths)
+
+
+plot(USAccDeaths)
+
+```
+
+```{r}
+
+# Check the number of points in the time series
+length(USAccDeaths)
+
+
+summary(USAccDeaths)
+
+```
+
+
+
+
+#### Separamos en train y test
+
+```{r}
+USAccDeaths_train <- USAccDeaths[1:66]
+USAccDeaths_train
+
+USAccDeaths_test <- USAccDeaths[67:72]
+USAccDeaths_test
+```
+
+
+
+
+#### ACF & PACF de la serie sin diferenciar 
+
+```{r}
+acf(USAccDeaths_train)
+pacf(USAccDeaths_train)
+```
+
+
+### Aplicamos un SARIMA (1,2,1)  
+
+```{r}
+library(astsa)
+
+# Fit the SARIMA model
+SARIMA_0_0_2_USAccDeaths <- astsa::sarima(USAccDeaths_train, p=0, d=0, q=2)
+
+# Print the model summary
+summary(SARIMA_0_0_2_USAccDeaths)
+
+```
+
+
+
+#### Predecimos con un SARIMA (0,0,2)  
+
+
+```{r}
+# Get the predictors
+pred_SARIMA_0_0_2_USAccDeaths <- sarima.for(USAccDeaths_train, n.ahead=6,0,0,2)
+pred_SARIMA_0_0_2_USAccDeaths
+
+```
+
+
+```{r}
+pred_SARIMA_0_0_2_USAccDeaths$pred
+```
+
+
+
+#### Aplicación de función ACCURACY  Calculo de errores  SARIMA (1,2,1) con euretail
+```{r}
+accuracy(pred_SARIMA_0_0_2_USAccDeaths$pred,USAccDeaths_test )
+```
+
