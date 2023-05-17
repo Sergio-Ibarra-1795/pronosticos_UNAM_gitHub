@@ -58,7 +58,7 @@ Demanda_electrico_importado$Date <- as.Date(Demanda_electrico_importado$Date, fo
 head(Demanda_electrico_importado)
 tail(Demanda_electrico_importado)
 typeof(Demanda_electrico_importado)
-dim(Demanda_electrico_importado)
+Demanda_electrico_importado
 
 ```
 
@@ -206,6 +206,11 @@ plot(prediccion_demanda_electrico_lineal_simple1$fit)
 
 
 #### Calculo de errores del 'modelo lineal generalizado simple' para los datos de Demanda_electrico
+
+```{r}
+Demanda_electrico_importado$Demanded_Gas[202:213]
+```
+
 
 ```{r}
 valores_calculados_demanda_electrico_lineal_simple1 <- prediccion_demanda_electrico_lineal_simple1$fit
