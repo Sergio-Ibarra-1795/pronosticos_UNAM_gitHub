@@ -1,0 +1,1003 @@
+---
+title: "Pronosticos_Class_23_Mayo_Aplicacion_Modelos_ARIMA_y_Lineales_a_mis_datos_demanda_electrico"
+author: "Sergi"
+date: "2023-02-27"
+output: html_document
+---
+
+
+## Aplicación de métodos de pronóstico lineales y de ARIMA a la series de tiempo de Demanda_electrico    
+
+```{r}
+
+library(tidyverse)      # data manipulation and visualization
+library(lubridate)      # easily work with dates and times
+library(fpp2)           # working with time series data
+library(zoo)
+library(ggplot2)
+library(plyr)
+library(dplyr)
+library(knitr)
+library(TTR)
+library(hydroGOF)
+
+
+```
+
+
+## Empezeos el análisis con los datos de Demanda_electrico
+
+Primero importamos la data con el gas demandado en el sector electrico
+```{r}
+#URL HPi5
+#Demanda_electrico_importado<-read.csv("C:\\Users\\llell\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM_HPi5\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
+#URL HPi3
+#Demanda_electrico_importado<-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
+#URL DesktopDell
+Demanda_electrico_importado<-read.csv("Demanda_electrico_2022_full1.csv", header= TRUE)
+
+```
+
+
+Nos aseguramos que la data con el gas demandado en el sector electrico se haya importado correctamente
+```{r}
+head(Demanda_electrico_importado)
+summary(Demanda_electrico_importado)
+typeof(Demanda_electrico_importado)
+dim(Demanda_electrico_importado)
+```
+
+
+
+Transformamos el tipo de dato de la columna DATE  a as.date column 
+
+```{r}
+Demanda_electrico_importado$Date <- as.Date(Demanda_electrico_importado$Date, format = "%m/%d/%Y")
+head(Demanda_electrico_importado)
+tail(Demanda_electrico_importado)
+typeof(Demanda_electrico_importado)
+Demanda_electrico_importado
+
+```
+
+
+#### Convertimos los datos de Demanda_electrico a Serie de tiempo 
+
+```{r}
+Demanda_electrico_importado.ts<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1))
+head(Demanda_electrico_importado.ts)
+
+typeof(Demanda_electrico_importado.ts)
+
+```
+
+
+Then we plot the 'original demanded gas in electric time series'
+```{r}
+plot(Demanda_electrico_importado.ts, col = "red", main = "Demanda electrico 'original' ")
+
+```
+
+#### Intentaremos aplicar un método de suavizamiento a la serie para intentar ´reducir el ruido' de los datos de los años 2020 y 2021 
+
+In R, there are multiple packages that provide the "SMA" function for calculating the Simple Moving Average. One popular package is "TTR" (Technical Trading Rules), which provides a wide range of functions for technical analysis.
+
+
+#### Simple Moving Average (SMA)
+
+```{r}
+
+# Load the TTR package
+library(TTR)
+
+Demanda_electrico_ts_SMA <- SMA(Demanda_electrico_importado.ts, n=12)
+```
+
+
+```{r}
+plot(Demanda_electrico_ts_SMA, col = "green", main = "Demanda electrico 'original'con SMA ")
+lines(Demanda_electrico_importado.ts, col="red")
+legend("bottomright", legend = c("Demanda electrico 'original'con SMA", "Demanda electrico ´original´"), col = c("green", "red"), lty = 1)
+```
+
+
+
+#### Wighted Moving Average (WMA)
+
+```{r}
+
+# Load the TTR package
+
+library(TTR)
+
+Demanda_electrico_ts_WMA <- WMA(Demanda_electrico_importado.ts, n = 12, wts = c(0.01, 0.019, 0.03, 0.04, 0.05, 0.06, 0.1, 0.1, 0.1, 0.1, 0.2, 0.2))
+
+```
+
+
+
+```{r}
+plot(Demanda_electrico_ts_WMA, col = "purple", main = "Demanda electrico 'original'con SMA ")
+lines(Demanda_electrico_importado.ts, col="red")
+legend("bottomright", legend = c("Demanda electrico 'original'con WMA", "Demanda electrico ´original´"), col = c("purple", "red"), lty = 1)
+```
+
+
+
+
+#### Separamos el df Demanda_electrico_importado en data sets train y test
+
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+Demanda_electrico_importado_train <- Demanda_electrico_importado[1:201,]
+head(Demanda_electrico_importado_train)
+tail(Demanda_electrico_importado_train)
+dim(Demanda_electrico_importado_train)
+
+
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_importado_test <- Demanda_electrico_importado[202:213,]
+head(Demanda_electrico_importado_test)
+dim(Demanda_electrico_importado_test)
+
+
+
+```
+
+
+
+
+## Ahora intentemos ajustar un 'modelo lineal generalizado simple' para la Demanda de gas natural en el sector electrico 
+
+
+```{r}
+tend <- c(1:213)
+
+dim(tend)
+
+mes=c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
+
+rep_mes <- rep(mes,18)
+
+
+
+Demanda_electrico_train_frame <- data.frame(Demanda_electrico_importado_train,rep_mes[1:201],tend[1:201])
+head(Demanda_electrico_train_frame)
+tail(Demanda_electrico_train_frame)
+dim(Demanda_electrico_train_frame)
+
+```
+
+```{r}
+Demanda_electrico_train_frame$rep_mes <-Demanda_electrico_train_frame$rep_mes.1.201
+Demanda_electrico_train_frame$rep_mes.1.201. <- NULL
+Demanda_electrico_train_frame$tend <-Demanda_electrico_train_frame$tend.1.201.
+Demanda_electrico_train_frame$tend.1.201. <- NULL
+
+Demanda_electrico_train_frame
+```
+
+
+#### Se 'entrena' (en este caso, se define) al modelo lineal con los datos de train 
+
+```{r}
+demanda_electrico_lineal_simple1 <- glm (Demanded_Gas ~  rep_mes + tend, data=Demanda_electrico_train_frame, family = gaussian(link = identity))
+demanda_electrico_lineal_simple1
+```
+
+
+```{r}
+summary(demanda_electrico_lineal_simple1)
+```
+
+
+```{r}
+plot(demanda_electrico_lineal_simple1)
+```
+
+#### Testeo del 'modelo lineal generalizado simple'  haciendo la predición de los datos de test 
+
+
+```{r}
+
+
+Demanda_electrico_test_frame <- data.frame(Demanda_electrico_importado_test,rep_mes[202:213],tend[202:213])
+head(Demanda_electrico_test_frame)
+tail(Demanda_electrico_test_frame)
+dim(Demanda_electrico_test_frame)
+
+```
+
+
+```{r}
+Demanda_electrico_test_frame$rep_mes <-Demanda_electrico_test_frame$rep_mes.202.213.
+Demanda_electrico_test_frame$rep_mes.202.213. <- NULL
+Demanda_electrico_test_frame$tend <-Demanda_electrico_test_frame$tend.202.213.
+Demanda_electrico_test_frame$tend.202.213. <- NULL
+
+Demanda_electrico_test_frame
+```
+
+
+
+
+```{r}
+prediccion_demanda_electrico_lineal_simple1 <- predict(demanda_electrico_lineal_simple1, newdata = Demanda_electrico_test_frame, se.fit = TRUE)
+
+
+prediccion_demanda_electrico_lineal_simple1
+```
+
+```{r}
+plot(prediccion_demanda_electrico_lineal_simple1$fit)
+```
+
+
+
+
+
+#### Calculo de errores del 'modelo lineal generalizado simple' para los datos de Demanda_electrico
+
+```{r}
+Demanda_electrico_importado$Demanded_Gas[202:213]
+```
+
+
+
+```{r}
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,valores_calculados_demanda_electrico_lineal_simple1 )
+```
+
+
+
+
+## Intentemos un 'modelo lineal simple' de Demanda_electrico ahora como función del precio de importacion de gas , PIB de Mexico y poblacion de mexico
+
+Precio de Importación de gas natural: https://www.eia.gov/dnav/ng/hist/n9132mx3M.htm
+
+PIB Mexico: https://www.banxico.org.mx/SieInternet/consultarDirectorioInternetAction.do?sector=2&accion=consultarCuadro&idCuadro=CR201&locale=es
+
+Poblacion en México: https://www.inegi.org.mx/app/areasgeograficas/#tabMCcollapse-Indicadores
+
+
+
+
+```{r}
+#URL DesktopDell
+
+Demanda_electrico_importado_mas_datos <- read.csv("Demanda_electrico_2022_mas_datos_full1_resumen.csv", header = TRUE, encoding = "UTF-8")
+
+```
+
+
+
+```{r}
+head(Demanda_electrico_importado_mas_datos)
+summary(Demanda_electrico_importado_mas_datos)
+typeof(Demanda_electrico_importado_mas_datos)
+dim(Demanda_electrico_importado_mas_datos)
+```
+
+
+```{r}
+Demanda_electrico_importado_mas_datos$Date <- as.Date(Demanda_electrico_importado_mas_datos$Date, format = "%m/%d/%Y")
+head(Demanda_electrico_importado_mas_datos)
+tail(Demanda_electrico_importado_mas_datos)
+typeof(Demanda_electrico_importado_mas_datos)
+dim(Demanda_electrico_importado_mas_datos)
+
+```
+
+Transformamos todos los datos a tipo numerico 
+
+```{r}
+Demanda_electrico_importado_mas_datosDemanded_Gas <- as.numeric(Demanda_electrico_importado_mas_datos$Demanded_Gas)
+
+Demanda_electrico_importado_mas_datos$Import_total_price_Dolares <- as.numeric(Demanda_electrico_importado_mas_datos$Import_total_price_Dolares)
+
+Demanda_electrico_importado_mas_datos$PIB_Millones_de_Dolares <- as.numeric(Demanda_electrico_importado_mas_datos$PIB_Millones_de_Dolares)
+
+Demanda_electrico_importado_mas_datos$Poblacion_en_Mexico <- as.numeric(Demanda_electrico_importado_mas_datos$Poblacion_en_Mexico)
+```
+
+
+
+#### Separamos el df Demanda_electrico_importado_mas_datos en data sets training y  testing  
+
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+Demanda_electrico_importado_mas_datos_train <- Demanda_electrico_importado_mas_datos[1:201,]
+head(Demanda_electrico_importado_mas_datos_train)
+tail(Demanda_electrico_importado_mas_datos_train)
+dim(Demanda_electrico_importado_mas_datos_train)
+
+
+
+```
+
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_importado_mas_datos_test <- Demanda_electrico_importado_mas_datos[202:213,]
+head(Demanda_electrico_importado_mas_datos_test)
+dim(Demanda_electrico_importado_mas_datos_test)
+
+
+
+```
+
+
+##### Recordemos que los supuestos del modelo lineal son:
+
+
+-Supuestos relacionados con los predictores-
+A. Correlacion lineal entre VD Y VIj 
+ A.1 La variable VD y VIj son simetricas? (Es decir que en torno a la media la curva sea simetrica)
+B. VIj no linealmente dependientes 
+
+-Supuestos relacionados con los errores/residuos-
+C. Normalidad de los errores
+D. No relación en los errores
+
+
+##### Supuesto de linealidad A. Correlacion lineal entre VD Y VIj para el caso de Demanda_electrico
+
+Viendo la correlación entre las variables Import_total_price_Dolares, PIB_Millones_de_Dolares , Poblacion_en_Mexico y Demanda_electrico
+
+
+
+```{r}
+#install.packages("corrplot")
+library(corrplot)
+cor_matrix_demanda_electrico <- cor(Demanda_electrico_importado_mas_datos_train[,2:5])
+cor_matrix_demanda_electrico
+corrplot(cor_matrix_demanda_electrico)
+
+```
+
+
+###### Supuesto de linealidad A.1 Las variables VD y VIj son simetricas? (Es decir que en torno a la media la curva sea simetrica)
+
+-Para el caso de la VD 
+
+qqnorm - Toma los quantiles teoricos vs los de datos reales  
+
+```{r}
+qqnorm(Demanda_electrico_importado_mas_datos_train[,2], main="Demanded_electrico"); qqline(Demanda_electrico_importado_mas_datos_train[,2])
+```
+
+Hagamos la prueba de Anderson-D  para verificar normalidad de esa variable  (H0 indica que los datos SI SON NORMNALES)
+```{r}
+#install.packages("nortest")
+
+library(nortest)
+
+nortest::ad.test(Demanda_electrico_importado_mas_datos_train$Demanded_Gas)
+
+hist(Demanda_electrico_importado_mas_datos_train$Demanded_Gas)
+```
+
+
+La VD no ers normal, pero si APROXIMADAMENTE SIMETRICO 
+
+
+Podriamos HACER UNA TRANSFORMACION A LA VD para INTENTAR ACERCARNOS MÁS A LA SIMETRIA 
+```{r}
+nortest::ad.test(log(Demanda_electrico_importado_mas_datos_train$Demanded_Gas))
+
+hist(log(Demanda_electrico_importado_mas_datos_train$Demanded_Gas))
+```
+
+
+```{r}
+nortest::ad.test(sqrt(Demanda_electrico_importado_mas_datos_train$Demanded_Gas))
+
+hist(sqrt(Demanda_electrico_importado_mas_datos_train$Demanded_Gas))
+```
+
+
+
+-Para el caso de las VIj 
+
+qqnorm - Toma los quantiles teoricos vs los de datos reales  
+
+```{r}
+qqnorm(Demanda_electrico_importado_mas_datos_train[,5], main="Poblacion_en_Mexico"); qqline(Demanda_electrico_importado_mas_datos_train[,5])
+```
+
+
+Hagamos la prueba de Anderson-D  para verificar normalidad de esa variable  (H0 indica que los datos SI SON NORMNALES)
+```{r}
+#install.packages("nortest")
+
+library(nortest)
+
+nortest::ad.test(Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico)
+
+hist(Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico)
+```
+
+
+##### Uso de scatter.hist para ver la relacion lineal entre variables y además la distribución entre variables
+
+```{r}
+library(psych)
+
+scatter.hist(Demanda_electrico_importado_mas_datos_train$Demanded_Gas, Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico)
+```
+
+Intentemos hacer transformación de los datos para ver como cambia (si es el caso) la relación lineal y la distribución determinada de un par de variables  
+
+```{r}
+library(psych)
+
+scatter.hist(Demanda_electrico_importado_mas_datos_train$Demanded_Gas, sqrt(Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico))
+```
+
+##### Supuesto de linealidad B. VIj no linealmente dependientes 
+
+pairs.panels de psych me permite ver todas esas relaciones juntas
+
+```{r}
+library(psych)
+
+pairs.panels(Demanda_electrico_importado_mas_datos_train)
+```
+
+```{r}
+summary(Demanda_electrico_importado_mas_datos_train)
+```
+
+
+
+##### Vamos a ajustar un modelo lineal de Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares (family = gaussian(link="identity"))
+
+```{r}
+modelo_lineal_electrico_mas_datos1 <- glm(Demanda_electrico_importado_mas_datos_train$Demanded_Gas ~ Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico + Demanda_electrico_importado_mas_datos_train$PIB_Millones_de_Dolares, family = gaussian(link="identity"))
+
+modelo_lineal_electrico_mas_datos1
+```
+
+
+##### Reasignando nombres a las variables del glm1 de Demanda_electrico
+
+
+```{r}
+new_formula1 <- as.formula(paste("Demanded_Gas ~", paste("Poblacion_en_Mexico + PIB_Millones_de_Dolares", collapse = " + ")))
+new_formula1
+
+
+modelo_lineal_electrico_mas_datos1 <- glm(formula = new_formula1,
+    data = Demanda_electrico_importado_mas_datos_train,
+    family = gaussian(link = "identity"))
+
+modelo_lineal_electrico_mas_datos1
+```
+
+
+
+##### Analizando el modelo lineal Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares 
+
+```{r}
+summary(modelo_lineal_electrico_mas_datos1)
+```
+
+##### -Supuestos relacionados con los errores/residuos- Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares
+
+C. Normalidad de los errores
+D. No relación en los errores
+
+```{r}
+plot(Demanda_electrico_importado_mas_datos_train)
+```
+
+
+```{r}
+plot(modelo_lineal_electrico_mas_datos1)
+```
+
+
+#### Predicicon con modelo lineal Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares
+```{r}
+
+
+prediccion_demanda_electrico_lineal_mas_datos1 <- predict(modelo_lineal_electrico_mas_datos1, newdata = Demanda_electrico_importado_mas_datos_test, se.fit = TRUE)
+
+
+prediccion_demanda_electrico_lineal_mas_datos1
+
+```
+
+
+```{r}
+plot(prediccion_demanda_electrico_lineal_mas_datos1$fit)
+```
+
+
+
+
+
+#### Calculo de errores del lineal Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares para los datos de Demanda_electrico
+
+```{r}
+valores_calculados_demanda_electrico_lineal_mas_datos1_simple1 <- prediccion_demanda_electrico_lineal_mas_datos1$fit
+
+# Calculate MAPE
+mape_electrico_lm_mas_datos1 <- mean(abs((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_mas_datos1_simple1) / Demanda_electrico_importado$Demanded_Gas[202:213])) * 100
+cat("El MAPE del 'modelo lineal generalizado con PIB y Poblacion para los datos de Demanda_electrico es:", round(mape_electrico_lm_mas_datos1,2),"%\n")
+
+# Calculate RMSE
+rmse_electrico_lm_mas_datos1 <- sqrt(mean((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_mas_datos1_simple1)^2))
+cat("El RMSE de modelo lineal generalizado con PIB y Poblacion para los datos de Demanda_electrico es:", round(rmse_electrico_lm_mas_datos1,2),"\n")
+```
+
+
+
+##### Vamos a ajustar un modelo lineal de Demanda_electrico con Poblacion_en_Mexico SIN PIB_Millones_de_Dolares (family = gaussian(link="identity"))
+
+```{r}
+modelo_lineal_electrico_mas_datos2 <- glm(Demanda_electrico_importado_mas_datos_train$Demanded_Gas ~ Demanda_electrico_importado_mas_datos_train$Poblacion_en_Mexico , family = gaussian(link="identity"))
+
+modelo_lineal_electrico_mas_datos2
+```
+
+
+##### Analizando el modelo lineal Demanda_electrico con Poblacion_en_Mexico  
+
+```{r}
+summary(modelo_lineal_electrico_mas_datos2)
+```
+
+
+##### Reasignando nombres al GLM2 de Demanda_electrico
+
+```{r}
+# Modified GLM call with changed variable names
+
+
+
+new_formula2 <- as.formula(paste("Demanded_Gas ~", paste("Poblacion_en_Mexico", collapse = " + ")))
+new_formula2
+
+
+modelo_lineal_electrico_mas_datos2 <- glm(formula = new_formula2,
+    data = Demanda_electrico_importado_mas_datos_train,
+    family = gaussian(link = "identity"))
+
+modelo_lineal_electrico_mas_datos2
+
+```
+
+```{r}
+summary(modelo_lineal_electrico_mas_datos2)
+```
+
+
+##### -Supuestos relacionados con los errores/residuos- Demanda_electrico con Poblacion_en_Mexico 
+
+C. Normalidad de los errores
+D. No relación en los errores
+
+
+```{r}
+plot(modelo_lineal_electrico_mas_datos2)
+```
+OJO: SI ESTAN ASOCIADOS PERO LA RELACIÓN QUE SE GUARDA ENTRE ELLOS NO ES LINEAL!!!!
+
+
+##### El criterio  Bayesian information criterion (BIC) or Schwarz information criterion 
+
+When fitting models, it is possible to increase the maximum likelihood by adding parameters, but doing so may result in overfitting. Both BIC and AIC attempt to resolve this problem by introducing a penalty term for the number of parameters in the model; the penalty term is larger in BIC than in AIC for sample sizes greater than 7.[
+
+The BIC is formally defined a
+
+$${BIC} =k\ln(n)-2\ln({\widehat {L}}).\ }$$
+\hat L = the maximized value of the likelihood function of the model 
+
+{\displaystyle {\hat {L}}=p(x\mid {\widehat {\theta }},M)}, where 
+
+^{\displaystyle {\widehat {\theta }}} are the parameter values that maximize the likelihood function;
+
+x = the observed data;
+
+n = the number of data points in x, the number of observations, or equivalently, the sample size;
+
+k = the number of parameters estimated by the model. For example, in multiple linear regression, the estimated parameters are the intercept, the q slope parameters, and the constant variance of the errors
+
+ 
+Ones with lower BIC values are generally preferred
+
+
+```{r}
+BIC(modelo_lineal_electrico_mas_datos1)
+```
+
+
+
+```{r}
+BIC(modelo_lineal_electrico_mas_datos2)
+```
+
+
+
+##### El criterio  AIC
+
+Ones with lower AIC values are generally preferred
+
+
+```{r}
+AIC(modelo_lineal_electrico_mas_datos1)
+```
+
+
+```{r}
+AIC(modelo_lineal_electrico_mas_datos2)
+```
+
+
+#### Predicicon con modelo lineal Demanda_electrico con Poblacion_en_Mexico 
+```{r}
+
+
+prediccion_demanda_electrico_lineal_mas_datos2 <- predict(modelo_lineal_electrico_mas_datos2, newdata = Demanda_electrico_importado_mas_datos_test, se.fit = TRUE)
+
+
+prediccion_demanda_electrico_lineal_mas_datos2
+
+```
+
+
+```{r}
+plot(prediccion_demanda_electrico_lineal_mas_datos2$fit)
+```
+
+
+
+
+#### Calculo de errores del lineal Demanda_electrico con Poblacion_en_Mexico para los datos de Demanda_electrico
+
+
+```{r}
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,valores_calculados_demanda_electrico_lineal_mas_datos_simple2 )
+```
+
+
+## Modelo SARIMA para Demanda electrico
+
+
+#### Determinación de ACF & PACF para el caso de la data de demanda del sector eléctrico (SIN ESTACIONALIZAR)
+
+```{r}
+#install.packages("forecast")
+library(forecast)
+
+#par(mfrow=c(2,1))
+
+acf_demanda_electrico_sin_diferencia <- Acf(Demanda_electrico_importado.ts, lag.max = 100, ci.type = "ma")
+acf_demanda_electrico_sin_diferencia
+
+
+pacf_demanda_electrico_sin_diferencia <- Pacf(Demanda_electrico_importado.ts, lag.max = 100, ci.type = "ma")
+pacf_demanda_electrico_sin_diferencia
+
+```
+
+
+#### Se lleva a cabo el tet de Dickey-Fulley The null hypothesis of DF test is that there is a unit root in an AR model, which implies that the data series is not stationary. 
+
+```{r}
+# Install and load the "urca" package
+#install.packages("urca")
+library(urca)
+
+# Perform ADF test for stationarity
+adf_test_electrico_sin_diferenciar <- ur.df(Demanda_electrico_importado.ts)
+
+# Print the ADF test results
+summary(adf_test_electrico_sin_diferenciar)
+
+```
+
+
+#### Vamos a diferenciar la serie de demanda_electrico 'para hacerlo estacionaria'
+
+```{r}
+# Calculate the difference between consecutive elements
+Demanda_electrico_diferencia1 <- diff(Demanda_electrico_importado.ts, differences = 1)
+
+# Print the results
+print(Demanda_electrico_diferencia1)
+
+```
+
+
+
+
+#### ACF & PACF para los datos de Demanda_electrico 'estacionariazada'
+
+
+```{r}
+library(forecast)
+
+#par(mfrow=c(2,1))
+
+acf_demanda_electrico_diferencia1 <- Acf(Demanda_electrico_diferencia1, lag.max = 100, ci.type = "ma")
+acf_demanda_electrico_diferencia1
+
+
+pacf_demanda_electrico_diferencia1 <- Pacf(Demanda_electrico_diferencia1, lag.max = 100, ci.type = "ma")
+pacf_demanda_electrico_diferencia1
+```
+
+
+
+```{r}
+# Install and load the "urca" package
+#install.packages("urca")
+library(urca)
+
+# Perform ADF test for stationarity
+adf_test_electrico_diferencia1 <- ur.df(Demanda_electrico_diferencia1)
+
+# Print the ADF test results
+summary(adf_test_electrico_diferencia1)
+
+```
+
+
+
+
+#### Training and testing sets (ORIGINAL) para aplicar modeo SARIMA  
+
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+Demanda_electrico_sin_differencia_train <- Demanda_electrico_importado.ts[1:201]
+Demanda_electrico_sin_differencia_train
+
+
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_sin_differencia_test <- Demanda_electrico_importado.ts[202:213]
+Demanda_electrico_sin_differencia_test
+
+
+
+```
+
+#### Ajustae y predicicon de Demanda_electrico con modelo SARIMA 
+
+
+```{r}
+#install.packages("astsa")
+library(astsa)
+
+# Fit the SARIMA model
+SARIMA_1_1_1_Demanda_electrico <- astsa::sarima(Demanda_electrico_sin_differencia_train, p=1, d=1, q=1)
+
+# Print the model summary
+summary(SARIMA_1_1_1_Demanda_electrico)
+
+```
+OJO EN LA DE Ljung-Box -DEBEN ESTAR ARRIBA, PARA VERIFIFCAR QUE LOS ERRORES NO ESTÉN ASOCIADOS ENTRE ELLOS (Se esperarian todos arriba del valor de p value)
+
+The Ljung–Box test may be defined as:
+
+H0: The data are independently distributed (i.e. the correlations in the population from which the sample is taken are 0, so that any observed correlations in the data result from randomness of the sampling process).
+Ha: The data are not independently distributed; they exhibit serial correlation.
+
+
+
+```{r}
+
+# Get the predictors
+
+
+pred_SARIMA_1_1_1_Demanda_electrico <- sarima.for(Demanda_electrico_sin_differencia_train, n.ahead=12,1,1,1)
+pred_SARIMA_1_1_1_Demanda_electrico
+
+
+```
+
+
+```{r}
+pred_SARIMA_1_1_1_Demanda_electrico$pred
+```
+
+
+
+
+#### Calculo de errores del lineal Demanda_electrico con SARIMA
+
+```{r}
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,pred_SARIMA_1_1_1_Demanda_electrico$pred )
+```
+
+
+
+
+
+
+#### Training and testing sets (SMA) para aplicar modeo SARIMA  
+
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+Demanda_electrico_sin_differencia_SMA_train <- Demanda_electrico_ts_SMA[1:201]
+head(Demanda_electrico_sin_differencia_SMA_train)
+
+Demanda_electrico_sin_differencia_SMA_train <-na.omit(Demanda_electrico_sin_differencia_SMA_train)
+head(Demanda_electrico_sin_differencia_SMA_train)
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+Demanda_electrico_sin_differencia_SMA_test <- Demanda_electrico_ts_SMA[202:213]
+Demanda_electrico_sin_differencia_SMA_test
+
+
+
+```
+
+#### Ajustae y predicicon de Demanda_electrico con modelo SARIMA 
+
+
+```{r}
+#install.packages("astsa")
+library(astsa)
+
+# Fit the SARIMA model
+SARIMA_1_1_1_Demanda_electrico_SMA <- astsa::sarima(Demanda_electrico_sin_differencia_SMA_train, p=1, d=1, q=1)
+
+# Print the model summary
+summary(SARIMA_1_1_1_Demanda_electrico_SMA)
+
+```
+
+
+
+
+```{r}
+
+# Get the predictors
+
+
+pred_SARIMA_1_1_1_Demanda_electrico_SMA <- sarima.for(Demanda_electrico_sin_differencia_SMA_train, n.ahead=12,1,1,1)
+pred_SARIMA_1_1_1_Demanda_electrico_SMA
+
+
+```
+
+
+```{r}
+pred_SARIMA_1_1_1_Demanda_electrico_SMA$pred
+```
+
+
+
+
+
+#### Calculo de errores del lineal Demanda_electrico con SARIMA
+
+```{r}
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,pred_SARIMA_1_1_1_Demanda_electrico_SMA$pred )
+```
+
+
+
+
+
+#### Training and testing sets (WMA) para aplicar modeo SARIMA  
+
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_sin_differencia_WMA_train <- Demanda_electrico_ts_WMA[1:201]
+head(Demanda_electrico_sin_differencia_WMA_train)
+
+Demanda_electrico_sin_differencia_WMA_train <-na.omit(Demanda_electrico_sin_differencia_WMA_train)
+head(Demanda_electrico_sin_differencia_WMA_train)
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+Demanda_electrico_sin_differencia_WMA_test <- Demanda_electrico_ts_WMA[202:213]
+Demanda_electrico_sin_differencia_WMA_test
+
+
+
+```
+
+#### Ajustae y predicicon de Demanda_electrico con modelo SARIMA 
+
+
+```{r}
+#install.packages("astsa")
+library(astsa)
+
+# Fit the SARIMA model
+SARIMA_1_1_1_Demanda_electrico_WMA <- astsa::sarima(Demanda_electrico_sin_differencia_WMA_train, p=1, d=1, q=1)
+
+# Print the model summary
+summary(SARIMA_1_1_1_Demanda_electrico_WMA)
+
+```
+
+
+
+
+```{r}
+
+# Get the predictors
+
+
+pred_SARIMA_1_1_1_Demanda_electrico_WMA <- sarima.for(Demanda_electrico_sin_differencia_WMA_train, n.ahead=12,1,1,1)
+pred_SARIMA_1_1_1_Demanda_electrico_WMA
+
+
+```
+
+
+```{r}
+pred_SARIMA_1_1_1_Demanda_electrico_WMA$pred
+```
+
+
+
+
+
+#### Calculo de errores del lineal Demanda_electrico con SARIMA
+
+```{r}
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,pred_SARIMA_1_1_1_Demanda_electrico_WMA$pred )
+```
+
+
+
+
+
+
+
