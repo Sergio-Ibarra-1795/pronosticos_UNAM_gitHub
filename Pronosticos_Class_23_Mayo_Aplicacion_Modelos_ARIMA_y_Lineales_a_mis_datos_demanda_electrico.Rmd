@@ -104,7 +104,7 @@ legend("bottomright", legend = c("Demanda electrico 'original'con SMA", "Demanda
 
 
 
-#### Wighted Moving Average (WMA)
+#### Weighted Moving Average (WMA)
 
 ```{r}
 
@@ -119,9 +119,45 @@ Demanda_electrico_ts_WMA <- WMA(Demanda_electrico_importado.ts, n = 12, wts = c(
 
 
 ```{r}
-plot(Demanda_electrico_ts_WMA, col = "purple", main = "Demanda electrico 'original'con SMA ")
+plot(Demanda_electrico_ts_WMA, col = "purple", main = "Demanda electrico 'original'con WMA ")
 lines(Demanda_electrico_importado.ts, col="red")
 legend("bottomright", legend = c("Demanda electrico 'original'con WMA", "Demanda electrico ´original´"), col = c("purple", "red"), lty = 1)
+```
+
+
+
+
+#### Transformando la variable dependiente (LOG(Y)) 
+
+```{r}
+
+# Load the TTR package
+library(TTR)
+
+Demanda_electrico_ts_log_transformado <- log(Demanda_electrico_importado.ts)
+```
+
+
+```{r}
+plot(Demanda_electrico_ts_log_transformado, col = "brown", main = "Demanda electrico 'original'transformado (log) ")
+```
+
+
+
+
+#### Transformando la variable dependiente (SQRT(Y)) 
+
+```{r}
+
+# Load the TTR package
+library(TTR)
+
+Demanda_electrico_ts_sqr_transformado <- sqrt(Demanda_electrico_importado.ts)
+```
+
+
+```{r}
+plot(Demanda_electrico_ts_sqr_transformado, col = "violet", main = "Demanda electrico 'original'transformado (sqrt)")
 ```
 
 
@@ -836,7 +872,7 @@ pred_SARIMA_1_1_1_Demanda_electrico$pred
 
 
 
-#### Calculo de errores del lineal Demanda_electrico con SARIMA
+#### Calculo de errores del Demanda_electrico_original.ts con SARIMA
 
 ```{r}
 accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,pred_SARIMA_1_1_1_Demanda_electrico$pred )
@@ -912,7 +948,7 @@ pred_SARIMA_1_1_1_Demanda_electrico_SMA$pred
 
 
 
-#### Calculo de errores del lineal Demanda_electrico con SARIMA
+#### Calculo de errores Demanda_electrico_sin_differencia_SMA con SARIMA
 
 ```{r}
 accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,pred_SARIMA_1_1_1_Demanda_electrico_SMA$pred )
@@ -989,11 +1025,180 @@ pred_SARIMA_1_1_1_Demanda_electrico_WMA$pred
 
 
 
-#### Calculo de errores del lineal Demanda_electrico con SARIMA
+#### Calculo de errores de Demanda_electrico_sin_differencia_WMA con SARIMA
 
 ```{r}
 accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,pred_SARIMA_1_1_1_Demanda_electrico_WMA$pred )
 ```
+
+
+
+
+
+#### Training and testing sets de Demanda_electrico_ts_log_transformado para aplicar modeo SARIMA  
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_sin_differencia_log_transformado_train <- 
+Demanda_electrico_ts_log_transformado[1:201]
+head(Demanda_electrico_sin_differencia_log_transformado_train)
+
+Demanda_electrico_sin_differencia_log_transformado_train <-na.omit(Demanda_electrico_sin_differencia_log_transformado_train)
+head(Demanda_electrico_sin_differencia_log_transformado_train)
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+Demanda_electrico_sin_differencia_log_transformado_test <- Demanda_electrico_ts_log_transformado[202:213]
+Demanda_electrico_sin_differencia_log_transformado_test
+
+
+
+```
+
+#### Ajustae y predicicon de Demanda_electrico_ts_log_transformado con modelo SARIMA 
+
+
+```{r}
+#install.packages("astsa")
+library(astsa)
+
+# Fit the SARIMA model
+SARIMA_1_1_1_Demanda_electrico_log_transformado <- astsa::sarima(Demanda_electrico_sin_differencia_log_transformado_train, p=1, d=1, q=1)
+
+# Print the model summary
+summary(SARIMA_1_1_1_Demanda_electrico_log_transformado)
+
+```
+
+
+
+
+```{r}
+
+# Get the predictors
+
+
+pred_SARIMA_1_1_1_Demanda_electrico_log_transformado <- sarima.for(Demanda_electrico_sin_differencia_log_transformado_train, n.ahead=12,1,1,1)
+pred_SARIMA_1_1_1_Demanda_electrico_log_transformado
+
+
+```
+
+
+```{r}
+pred_SARIMA_1_1_1_Demanda_electrico_log_transformado$pred
+```
+
+##### Transformando los datos previamente transformados de la variable dependiente 
+
+```{r}
+exp(pred_SARIMA_1_1_1_Demanda_electrico_log_transformado$pred)
+```
+
+
+
+#### Calculo de errores de Demanda_electrico_ts_log_transformado con SARIMA
+
+```{r}
+library(forecast)
+
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,exp(pred_SARIMA_1_1_1_Demanda_electrico_log_transformado$pred) )
+```
+
+
+
+
+
+
+#### Training and testing sets de Demanda_electrico_ts_sqr_transformado para aplicar modeo SARIMA  
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_sin_differencia_sqr_transformado_train <- Demanda_electrico_ts_sqr_transformado[1:201]
+head(Demanda_electrico_sin_differencia_sqr_transformado_train)
+
+Demanda_electrico_sin_differencia_sqr_transformado_train <-na.omit(Demanda_electrico_sin_differencia_sqr_transformado_train)
+head(Demanda_electrico_sin_differencia_sqr_transformado_train)
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+Demanda_electrico_sin_differencia_sqr_transformado_test <- Demanda_electrico_ts_sqr_transformado[202:213]
+Demanda_electrico_sin_differencia_sqr_transformado_test
+
+
+
+```
+
+#### Ajustae y predicicon de Demanda_electrico_ts_sqr_transformado con modelo SARIMA 
+
+
+```{r}
+#install.packages("astsa")
+library(astsa)
+
+# Fit the SARIMA model
+SARIMA_1_1_1_Demanda_electrico_sqr_transformado <- astsa::sarima(Demanda_electrico_sin_differencia_sqr_transformado_train, p=1, d=1, q=1)
+
+# Print the model summary
+summary(SARIMA_1_1_1_Demanda_electrico_sqr_transformado)
+
+```
+
+
+
+
+```{r}
+
+# Get the predictors
+
+
+pred_SARIMA_1_1_1_Demanda_electrico_sqr_transformado <- sarima.for(Demanda_electrico_sin_differencia_sqr_transformado_train, n.ahead=12,1,1,1)
+pred_SARIMA_1_1_1_Demanda_electrico_sqr_transformado
+
+
+```
+
+
+```{r}
+pred_SARIMA_1_1_1_Demanda_electrico_sqr_transformado$pred
+```
+
+##### Transformando los datos previamente transformados de la variable dependiente 
+
+```{r}
+(pred_SARIMA_1_1_1_Demanda_electrico_sqr_transformado$pred)**2
+```
+
+
+
+#### Calculo de errores de Demanda_electrico_ts_log_transformado con SARIMA
+
+```{r}
+library(forecast)
+
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,(pred_SARIMA_1_1_1_Demanda_electrico_sqr_transformado$pred)**2 )
+```
+
+
+
 
 
 
