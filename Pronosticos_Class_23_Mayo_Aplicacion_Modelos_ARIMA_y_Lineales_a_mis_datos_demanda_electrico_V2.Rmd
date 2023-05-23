@@ -1,0 +1,646 @@
+---
+title: "Pronosticos_Class_23_Mayo_Aplicacion_Modelos_ARIMA_y_Lineales_a_mis_datos_demanda_electrico_V2"
+author: "Sergi"
+date: "2023-02-27"
+output: html_document
+---
+
+
+## Aplicación de métodos de pronóstico lineales y de ARIMA a la series de tiempo de Demanda_electrico    
+
+```{r}
+
+library(tidyverse)      # data manipulation and visualization
+library(lubridate)      # easily work with dates and times
+library(fpp2)           # working with time series data
+library(zoo)
+library(ggplot2)
+library(plyr)
+library(dplyr)
+library(knitr)
+library(TTR)
+library(hydroGOF)
+
+
+```
+
+
+## Empezeos el análisis con los datos de Demanda_electrico
+
+Primero importamos la data con el gas demandado en el sector electrico
+```{r}
+#URL HPi5
+#Demanda_electrico_importado<-read.csv("C:\\Users\\llell\\Documents\\MIS\\Second_semester\\Pronosticos_UNAM_HPi5\\pronosticos_UNAM_git\\pronosticos_UNAM_gitHub\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
+#URL HPi3
+#Demanda_electrico_importado<-read.csv("C:\\Users\\sergi\\OneDrive\\Documentos\\MIS_UNAM\\Segundo_semestre\\Pronosticos_UNAM_HPi3\\pronosticos_UNAM_git\\Demanda_electrico_2022_full1.csv", header= TRUE)
+
+#URL DesktopDell
+Demanda_electrico_importado<-read.csv("Demanda_electrico_2022_full1.csv", header= TRUE)
+
+```
+
+
+Nos aseguramos que la data con el gas demandado en el sector electrico se haya importado correctamente
+```{r}
+head(Demanda_electrico_importado)
+summary(Demanda_electrico_importado)
+typeof(Demanda_electrico_importado)
+dim(Demanda_electrico_importado)
+```
+
+
+
+Transformamos el tipo de dato de la columna DATE  a as.date column 
+
+```{r}
+Demanda_electrico_importado$Date <- as.Date(Demanda_electrico_importado$Date, format = "%m/%d/%Y")
+head(Demanda_electrico_importado)
+tail(Demanda_electrico_importado)
+typeof(Demanda_electrico_importado)
+Demanda_electrico_importado
+
+```
+
+
+### Deteccion de outliers en Demanda_electrico_importado 'original'
+
+
+
+Junio de 2020 y 2021 
+```{r}
+Demanda_electrico_importado[186,]
+
+
+Demanda_electrico_importado_promedio_junio <- mean(c(Demanda_electrico_importado$Demanded_Gas[186-36], Demanda_electrico_importado$Demanded_Gas[186-24],Demanda_electrico_importado$Demanded_Gas[186-12], Demanda_electrico_importado$Demanded_Gas[186], Demanda_electrico_importado$Demanded_Gas[186+12]))
+
+Demanda_electrico_importado_promedio_junio
+
+
+Demanda_electrico_importado[186+12,]
+```
+
+
+### Sustitucion de outliers en Demanda_electrico_importado 'original' por promedio histórico
+
+```{r}
+Demanda_electrico_importado$Demanded_Gas[186] <- Demanda_electrico_importado_promedio_junio
+Demanda_electrico_importado$Demanded_Gas[186+12] <- Demanda_electrico_importado_promedio_junio
+
+Demanda_electrico_importado
+```
+
+
+
+
+
+#### Convertimos los datos de Demanda_electrico a Serie de tiempo 
+
+```{r}
+Demanda_electrico_importado.ts_V2<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1))
+head(Demanda_electrico_importado.ts_V2)
+
+typeof(Demanda_electrico_importado.ts_V2)
+
+```
+
+
+Then we plot the 'original demanded gas in electric time series'
+```{r}
+plot(Demanda_electrico_importado.ts_V2, col = "red", main = "Demanda electrico 'original'_V2 ")
+
+```
+
+#### Intentaremos aplicar un método de suavizamiento a la serie para intentar ´reducir el ruido' de los datos de los años 2020 y 2021 
+
+In R, there are multiple packages that provide the "SMA" function for calculating the Simple Moving Average. One popular package is "TTR" (Technical Trading Rules), which provides a wide range of functions for technical analysis.
+
+
+#### Simple Moving Average (SMA)
+
+```{r}
+
+# Load the TTR package
+library(TTR)
+
+Demanda_electrico_ts_SMA_V2 <- SMA(Demanda_electrico_importado.ts_V2, n=12)
+```
+
+
+```{r}
+plot(Demanda_electrico_ts_SMA_V2, col = "green", main = "Demanda electrico 'original'con SMA ")
+lines(Demanda_electrico_importado.ts_V2, col="red")
+legend("bottomright", legend = c("Demanda electrico 'original'con Simple Moving Average (SMA) _V2", "Demanda electrico ´original´ _V2"), col = c("green", "red"), lty = 1)
+```
+
+
+
+#### Weighted Moving Average (WMA)
+
+```{r}
+
+# Load the TTR package
+
+library(TTR)
+
+Demanda_electrico_ts_WMA_V2 <- WMA(Demanda_electrico_importado.ts_V2, n = 12, wts = c(0.01, 0.019, 0.03, 0.04, 0.05, 0.06, 0.1, 0.1, 0.1, 0.1, 0.2, 0.2))
+
+```
+
+
+
+```{r}
+plot(Demanda_electrico_ts_WMA_V2, col = "purple", main = "Demanda electrico 'original'con WMA ")
+lines(Demanda_electrico_importado.ts_V2, col="red")
+legend("bottomright", legend = c("Demanda electrico 'original'con WMA _V2", "Demanda electrico ´original´_V2"), col = c("purple", "red"), lty = 1)
+```
+
+
+
+
+#### Transformando la variable dependiente (LOG(Y)) 
+
+```{r}
+
+# Load the TTR package
+library(TTR)
+
+Demanda_electrico_ts_log_transformado_V2 <- log(Demanda_electrico_importado.ts_V2)
+```
+
+
+```{r}
+plot(Demanda_electrico_ts_log_transformado_V2, col = "brown", main = "Demanda electrico 'original'transformado usando la funcion log _V2")
+```
+
+
+
+
+#### Transformando la variable dependiente (SQRT(Y)) 
+
+```{r}
+
+# Load the TTR package
+library(TTR)
+
+Demanda_electrico_ts_sqr_transformado_V2 <- sqrt(Demanda_electrico_importado.ts_V2)
+```
+
+
+```{r}
+plot(Demanda_electrico_ts_sqr_transformado_V2, col = "violet", main = "Demanda electrico 'original'transformado (sqrt) _V2")
+```
+
+
+
+
+#### Separamos el df Demanda_electrico_importado en data sets train y test
+
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+Demanda_electrico_importado_train_V2 <- Demanda_electrico_importado[1:201,]
+head(Demanda_electrico_importado_train_V2)
+tail(Demanda_electrico_importado_train_V2)
+dim(Demanda_electrico_importado_train_V2)
+
+
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_importado_test_V2 <- Demanda_electrico_importado[202:213,]
+head(Demanda_electrico_importado_test_V2)
+dim(Demanda_electrico_importado_test_V2)
+
+
+
+```
+
+
+
+
+## Ahora intentemos ajustar un 'modelo lineal generalizado simple' para la Demanda de gas natural en el sector electrico 
+
+
+```{r}
+tend <- c(1:213)
+
+dim(tend)
+
+mes=c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
+
+rep_mes <- rep(mes,18)
+
+
+
+Demanda_electrico_train_frame_V2 <- data.frame(Demanda_electrico_importado_train_V2,rep_mes[1:201],tend[1:201])
+head(Demanda_electrico_train_frame_V2)
+tail(Demanda_electrico_train_frame_V2)
+dim(Demanda_electrico_train_frame_V2)
+
+```
+
+```{r}
+Demanda_electrico_train_frame_V2$rep_mes <-Demanda_electrico_train_frame_V2$rep_mes.1.201
+Demanda_electrico_train_frame_V2$rep_mes.1.201. <- NULL
+Demanda_electrico_train_frame_V2$tend <-Demanda_electrico_train_frame_V2$tend.1.201.
+Demanda_electrico_train_frame_V2$tend.1.201. <- NULL
+
+Demanda_electrico_train_frame_V2
+```
+
+
+#### Se 'entrena' (en este caso, se define) al modelo lineal con los datos de train 
+
+```{r}
+demanda_electrico_lineal_simple1_V2 <- glm (Demanded_Gas ~  rep_mes + tend, data=Demanda_electrico_train_frame_V2, family = gaussian(link = identity))
+demanda_electrico_lineal_simple1_V2
+```
+
+
+```{r}
+summary(demanda_electrico_lineal_simple1_V2)
+```
+
+
+```{r}
+plot(demanda_electrico_lineal_simple1_V2)
+```
+
+#### Testeo del 'modelo lineal generalizado simple'  haciendo la predición de los datos de test 
+
+
+```{r}
+
+
+Demanda_electrico_test_frame_V2 <- data.frame(Demanda_electrico_importado_test_V2,rep_mes[202:213],tend[202:213])
+head(Demanda_electrico_test_frame_V2)
+tail(Demanda_electrico_test_frame_V2)
+dim(Demanda_electrico_test_frame_V2)
+
+```
+
+
+```{r}
+Demanda_electrico_test_frame_V2$rep_mes <-Demanda_electrico_test_frame_V2$rep_mes.202.213.
+Demanda_electrico_test_frame_V2$rep_mes.202.213. <- NULL
+Demanda_electrico_test_frame_V2$tend <-Demanda_electrico_test_frame_V2$tend.202.213.
+Demanda_electrico_test_frame_V2$tend.202.213. <- NULL
+
+Demanda_electrico_test_frame_V2
+```
+
+
+
+
+```{r}
+prediccion_demanda_electrico_lineal_simple1_V2 <- predict(demanda_electrico_lineal_simple1_V2, newdata = Demanda_electrico_test_frame_V2, se.fit = TRUE)
+
+
+prediccion_demanda_electrico_lineal_simple1_V2
+```
+
+```{r}
+plot(prediccion_demanda_electrico_lineal_simple1_V2$fit)
+```
+
+
+
+
+
+#### Calculo de errores del 'modelo lineal generalizado simple' para los datos de Demanda_electrico
+
+
+```{r}
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] , prediccion_demanda_electrico_lineal_simple1_V2$fit)
+```
+
+
+
+## Modelo SARIMA para Demanda electrico VERSION 2
+
+
+#### Determinación de ACF & PACF para el caso de la data de demanda del sector eléctrico (SIN ESTACIONALIZAR)
+
+```{r}
+#install.packages("forecast")
+library(forecast)
+
+#par(mfrow=c(2,1))
+
+acf_demanda_electrico_sin_diferencia_V2 <- Acf(Demanda_electrico_importado.ts_V2, lag.max = 100, ci.type = "ma")
+acf_demanda_electrico_sin_diferencia_V2
+
+
+pacf_demanda_electrico_sin_diferencia_V2 <- Pacf(Demanda_electrico_importado.ts_V2, lag.max = 100, ci.type = "ma")
+pacf_demanda_electrico_sin_diferencia_V2
+
+```
+
+
+#### Se lleva a cabo el tet de Dickey-Fulley The null hypothesis of DF test is that there is a unit root in an AR model, which implies that the data series is not stationary. 
+
+```{r}
+# Install and load the "urca" package
+#install.packages("urca")
+library(urca)
+
+# Perform ADF test for stationarity
+adf_test_electrico_sin_diferenciar_V2 <- ur.df(Demanda_electrico_importado.ts_V2)
+
+# Print the ADF test results
+summary(adf_test_electrico_sin_diferenciar_V2)
+
+```
+
+
+#### Vamos a diferenciar la serie de demanda_electrico 'para hacerlo estacionaria'
+
+```{r}
+# Calculate the difference between consecutive elements
+Demanda_electrico_diferencia1_V2 <- diff(Demanda_electrico_importado.ts_V2, differences = 1)
+
+# Print the results
+print(Demanda_electrico_diferencia1_V2)
+
+```
+
+
+
+
+#### ACF & PACF para los datos de Demanda_electrico 'estacionariazada'
+
+
+```{r}
+library(forecast)
+
+#par(mfrow=c(2,1))
+
+acf_demanda_electrico_diferencia1_V2 <- Acf(Demanda_electrico_diferencia1_V2, lag.max = 100, ci.type = "ma")
+acf_demanda_electrico_diferencia1_V2
+
+
+pacf_demanda_electrico_diferencia1_V2 <- Pacf(Demanda_electrico_diferencia1_V2, lag.max = 100, ci.type = "ma")
+pacf_demanda_electrico_diferencia1_V2
+```
+
+
+
+```{r}
+# Install and load the "urca" package
+#install.packages("urca")
+library(urca)
+
+# Perform ADF test for stationarity
+adf_test_electrico_diferencia1_V2 <- ur.df(Demanda_electrico_diferencia1_V2)
+
+# Print the ADF test results
+summary(adf_test_electrico_diferencia1_V2)
+
+```
+
+
+
+
+#### Training and testing sets (ORIGINAL) para aplicar modeo SARIMA  
+
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+Demanda_electrico_sin_differencia_train_V2 <- Demanda_electrico_importado.ts_V2[1:201]
+Demanda_electrico_sin_differencia_train_V2
+
+
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_sin_differencia_test_V2 <- Demanda_electrico_importado.ts_V2[202:213]
+Demanda_electrico_sin_differencia_test_V2
+
+
+
+```
+
+#### Ajustae y predicicon de Demanda_electrico con modelo SARIMA 
+
+
+```{r}
+#install.packages("astsa")
+library(astsa)
+
+# Fit the SARIMA model
+SARIMA_1_1_1_Demanda_electrico_V2 <- astsa::sarima(Demanda_electrico_sin_differencia_train_V2, p=1, d=1, q=1)
+
+# Print the model summary
+summary(SARIMA_1_1_1_Demanda_electrico_V2)
+
+```
+The Ljung–Box test may be defined as:
+
+
+H0: The data are independently distributed (i.e. the correlations in the population from which the sample is taken are 0, so that any observed correlations in the data result from randomness of the sampling process).
+Ha: The data are not independently distributed; they exhibit serial correlation.
+
+
+
+```{r}
+
+# Get the predictors
+
+
+pred_SARIMA_1_1_1_Demanda_electrico_V2 <- sarima.for(Demanda_electrico_sin_differencia_train_V2, n.ahead=12,1,1,1)
+pred_SARIMA_1_1_1_Demanda_electrico_V2
+
+
+```
+
+
+```{r}
+pred_SARIMA_1_1_1_Demanda_electrico_V2$pred
+```
+
+
+
+
+#### Calculo de errores del Demanda_electrico_original.ts con SARIMA
+
+```{r}
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,pred_SARIMA_1_1_1_Demanda_electrico_V2$pred )
+```
+
+
+
+
+
+#### Training and testing sets de Demanda_electrico_ts_log_transformado para aplicar modeo SARIMA  
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_sin_differencia_log_transformado_train_V2 <- 
+Demanda_electrico_ts_log_transformado_V2[1:201]
+head(Demanda_electrico_sin_differencia_log_transformado_train_V2)
+
+Demanda_electrico_sin_differencia_log_transformado_train_V2 <-na.omit(Demanda_electrico_sin_differencia_log_transformado_train_V2)
+head(Demanda_electrico_sin_differencia_log_transformado_train_V2)
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+Demanda_electrico_sin_differencia_log_transformado_test_V2 <- Demanda_electrico_ts_log_transformado_V2[202:213]
+Demanda_electrico_sin_differencia_log_transformado_test_V2
+
+
+
+```
+
+#### Ajustae y predicicon de Demanda_electrico_ts_log_transformado con modelo SARIMA 
+
+
+```{r}
+#install.packages("astsa")
+library(astsa)
+
+# Fit the SARIMA model
+SARIMA_1_1_1_Demanda_electrico_log_transformado_V2 <- astsa::sarima(Demanda_electrico_sin_differencia_log_transformado_train_V2, p=1, d=1, q=1)
+
+# Print the model summary
+summary(SARIMA_1_1_1_Demanda_electrico_log_transformado_V2)
+
+```
+
+
+
+
+```{r}
+
+# Get the predictors
+
+
+pred_SARIMA_1_1_1_Demanda_electrico_log_transformado_V2 <- sarima.for(Demanda_electrico_sin_differencia_log_transformado_train_V2, n.ahead=12,1,1,1)
+pred_SARIMA_1_1_1_Demanda_electrico_log_transformado_V2
+
+
+```
+
+
+```{r}
+pred_SARIMA_1_1_1_Demanda_electrico_log_transformado_V2$pred
+```
+
+##### Transformando los datos previamente transformados de la variable dependiente 
+
+```{r}
+exp(pred_SARIMA_1_1_1_Demanda_electrico_log_transformado_V2$pred)
+```
+
+
+
+#### Calculo de errores de Demanda_electrico_ts_log_transformado con SARIMA
+
+```{r}
+library(forecast)
+
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,exp(pred_SARIMA_1_1_1_Demanda_electrico_log_transformado_V2$pred) )
+```
+
+
+
+
+
+#### Then we are able to apply the HoltWinters method 
+
+```{r}
+Demanda_electrico_HW_V2 <- HoltWinters(Demanda_electrico_importado.ts_V2)
+head(Demanda_electrico_HW_V2)
+typeof(Demanda_electrico_HW_V2)
+```
+
+
+Let´s see only the SMOTHED VALUES
+```{r}
+Smoothed_values_Demanda_electrico_HW_V2 <- Demanda_electrico_HW_V2$x
+
+head(Smoothed_values_Demanda_electrico_HW_V2)
+tail(Smoothed_values_Demanda_electrico_HW_V2)
+typeof(Smoothed_values_Demanda_electrico_HW_V2)
+dim(Smoothed_values_Demanda_electrico_HW_V2)
+
+```
+
+
+SMOOTHED VALUS ARE EQUAL THAN ORIGINAL ONES
+```{r}
+plot(Demanda_electrico_importado.ts_V2, col = "red", main = "Demanda electrico Holt-winters original _V2 vs smoothed values calculated with HoltWinters _V2")
+lines(Smoothed_values_Demanda_electrico_HW_V2 , col='pink')
+```
+
+
+
+LEt´s plot the forecast
+```{r}
+plot(Demanda_electrico_HW_V2)
+
+```
+
+```{r}
+head(Demanda_electrico_HW_V2$fitted)
+tail(Demanda_electrico_HW_V2$fitted)
+```
+
+#### HAGAMOS COMO TAL EL FORECAST DEL MODELO HOLT-WINTER PARA EL CASO DE DEMANDA_ELECTRICO
+```{r}
+library(forecast)
+
+Demanda_electrico_HW_forecast_V2 <- forecast(Demanda_electrico_HW_V2, h=12, level=0.95)
+head(Demanda_electrico_HW_forecast_V2)
+```
+
+
+
+
+Let´s plot the forecast generated by HoltWinters model in  R 
+
+```{r}
+plot(Demanda_electrico_HW_forecast_V2)
+Demanda_electrico_HW_forecast_V2$mean
+```
+
+
+
+
+#### Calculo de errores de Demanda_electrico_HW_forecast
+
+```{r}
+library(forecast)
+
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,Demanda_electrico_HW_forecast_V2$mean )
+```
+
+
+
+
+
