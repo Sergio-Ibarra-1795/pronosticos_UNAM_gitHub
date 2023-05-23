@@ -1,5 +1,5 @@
 ---
-title: "Pronosticos_Class_23_Mayo_Aplicacion_Modelos_ARIMA_y_Lineales_a_mis_datos_demanda_electrico_V2"
+title: "Pronosticos_Class_23_Mayo_Aplicacion_Modelos_ARIMA_y_Lineales_a_mis_datos_demanda_electrico_V2.1"
 author: "Sergi"
 date: "2023-02-27"
 output: html_document
@@ -94,18 +94,21 @@ Demanda_electrico_importado$Demanded_Gas[186+12] <- Demanda_electrico_importado_
 
 
 # 2019--10-01
-Demanda_electrico_importado$Demanded_Gas[178] <- mean(Demanda_electrico_importado$Demanded_Gas[178-24], Demanda_electrico_importado$Demanded_Gas[178-12],Demanda_electrico_importado$Demanded_Gas[178],Demanda_electrico_importado$Demanded_Gas[178+12])
+Demanda_electrico_importado$Demanded_Gas[178] <- mean(c(Demanda_electrico_importado$Demanded_Gas[178-24], Demanda_electrico_importado$Demanded_Gas[178-12],Demanda_electrico_importado$Demanded_Gas[178],Demanda_electrico_importado$Demanded_Gas[178+12], Demanda_electrico_importado$Demanded_Gas[178+24]))
 
 Demanda_electrico_importado$Demanded_Gas[178]
 
 
 # 2019--11-01
-Demanda_electrico_importado$Demanded_Gas[179] <- mean(Demanda_electrico_importado$Demanded_Gas[179-24], Demanda_electrico_importado$Demanded_Gas[179-12], Demanda_electrico_importado$Demanded_Gas[179], Demanda_electrico_importado$Demanded_Gas[179+12])
+Demanda_electrico_importado$Demanded_Gas[179] <- mean(c(Demanda_electrico_importado$Demanded_Gas[179-24], Demanda_electrico_importado$Demanded_Gas[179-12], Demanda_electrico_importado$Demanded_Gas[179], Demanda_electrico_importado$Demanded_Gas[179+12], Demanda_electrico_importado$Demanded_Gas[179+24]))
 
 Demanda_electrico_importado$Demanded_Gas[179]
 
 # 2019--12-01
-Demanda_electrico_importado$Demanded_Gas[180] <- mean(Demanda_electrico_importado$Demanded_Gas[180-24], Demanda_electrico_importado$Demanded_Gas[180-12], Demanda_electrico_importado$Demanded_Gas[180], Demanda_electrico_importado$Demanded_Gas[180+12])
+
+Demanda_electrico_importado$Demanded_Gas[180] <- mean(c(Demanda_electrico_importado$Demanded_Gas[180-24], 
+Demanda_electrico_importado$Demanded_Gas[180-12],Demanda_electrico_importado$Demanded_Gas[180],Demanda_electrico_importado$Demanded_Gas[180+12],Demanda_electrico_importado$Demanded_Gas[180+24]))
+
 
 Demanda_electrico_importado$Demanded_Gas[180]
 
@@ -115,17 +118,17 @@ Demanda_electrico_importado
 
 ```{r}
 # 2021--01-01
-Demanda_electrico_importado$Demanded_Gas[193] <- mean(Demanda_electrico_importado$Demanded_Gas[193-24], Demanda_electrico_importado$Demanded_Gas[193-12], Demanda_electrico_importado$Demanded_Gas[193], Demanda_electrico_importado$Demanded_Gas[193+12])
+Demanda_electrico_importado$Demanded_Gas[193] <- mean(c(Demanda_electrico_importado$Demanded_Gas[193-24], Demanda_electrico_importado$Demanded_Gas[193-12], Demanda_electrico_importado$Demanded_Gas[193], Demanda_electrico_importado$Demanded_Gas[193+12]))
 
 Demanda_electrico_importado$Demanded_Gas[193]
 
 # 2021--02-01
-Demanda_electrico_importado$Demanded_Gas[194] <- mean(Demanda_electrico_importado$Demanded_Gas[194-24], Demanda_electrico_importado$Demanded_Gas[194-12], Demanda_electrico_importado$Demanded_Gas[194],Demanda_electrico_importado$Demanded_Gas[194+12])
+Demanda_electrico_importado$Demanded_Gas[194] <- mean(c(Demanda_electrico_importado$Demanded_Gas[194-24], Demanda_electrico_importado$Demanded_Gas[194-12], Demanda_electrico_importado$Demanded_Gas[194],Demanda_electrico_importado$Demanded_Gas[194+12]))
 
 Demanda_electrico_importado$Demanded_Gas[194]
 
 # 2021--03-01
-Demanda_electrico_importado$Demanded_Gas[194] <- mean(Demanda_electrico_importado$Demanded_Gas[194-24], Demanda_electrico_importado$Demanded_Gas[194-12], Demanda_electrico_importado$Demanded_Gas[194],Demanda_electrico_importado$Demanded_Gas[194+12])
+Demanda_electrico_importado$Demanded_Gas[194] <- mean(c(Demanda_electrico_importado$Demanded_Gas[194-24], Demanda_electrico_importado$Demanded_Gas[194-12], Demanda_electrico_importado$Demanded_Gas[194],Demanda_electrico_importado$Demanded_Gas[194+12]))
 
 Demanda_electrico_importado$Demanded_Gas[194]
 
@@ -187,14 +190,14 @@ In R, there are multiple packages that provide the "SMA" function for calculatin
 # Load the TTR package
 library(TTR)
 
-Demanda_electrico_ts_SMA_V2 <- SMA(Demanda_electrico_importado.ts_V2, n=12)
+Demanda_electrico_ts_SMA_V2 <- SMA(Demanda_electrico_importado.ts_V2, n=6)
 ```
 
 
 ```{r}
 plot(Demanda_electrico_ts_SMA_V2, col = "green", main = "Demanda electrico 'original'con SMA ")
-lines(Demanda_electrico_importado.ts_V2, col="red")
-legend("bottomright", legend = c("Demanda electrico 'original'con Simple Moving Average (SMA) _V2", "Demanda electrico ´original´ _V2"), col = c("green", "red"), lty = 1)
+lines(Demanda_electrico_importado.ts_V2, col="violet")
+legend("bottomright", legend = c("Demanda electrico 'original'con Simple Moving Average (SMA) _V2", "Demanda electrico ´original´ _V2"), col = c("green", "violet"), lty = 1)
 ```
 
 
@@ -207,16 +210,16 @@ legend("bottomright", legend = c("Demanda electrico 'original'con Simple Moving 
 
 library(TTR)
 
-Demanda_electrico_ts_WMA_V2 <- WMA(Demanda_electrico_importado.ts_V2, n = 12, wts = c(0.01, 0.019, 0.03, 0.04, 0.05, 0.06, 0.1, 0.1, 0.1, 0.1, 0.2, 0.2))
+Demanda_electrico_ts_WMA_V2 <- WMA(Demanda_electrico_importado.ts_V2, n = 6, wts = c(0.05, 0.05, 0.1, 0.2, 0.3, 0.3))
 
 ```
 
 
 
 ```{r}
-plot(Demanda_electrico_ts_WMA_V2, col = "purple", main = "Demanda electrico 'original'con WMA ")
-lines(Demanda_electrico_importado.ts_V2, col="red")
-legend("bottomright", legend = c("Demanda electrico 'original'con WMA _V2", "Demanda electrico ´original´_V2"), col = c("purple", "red"), lty = 1)
+plot(Demanda_electrico_ts_WMA_V2, col = "orange", main = "Demanda electrico 'original'con WMA ")
+lines(Demanda_electrico_importado.ts_V2, col="violet")
+legend("bottomright", legend = c("Demanda electrico 'original'con WMA _V2", "Demanda electrico ´original´_V2"), col = c("orange", "violet"), lty = 1)
 ```
 
 
@@ -252,7 +255,7 @@ Demanda_electrico_ts_sqr_transformado_V2 <- sqrt(Demanda_electrico_importado.ts_
 
 
 ```{r}
-plot(Demanda_electrico_ts_sqr_transformado_V2, col = "violet", main = "Demanda electrico 'original'transformado (sqrt) _V2")
+plot(Demanda_electrico_ts_sqr_transformado_V2, col = "gold", main = "Demanda electrico 'original'transformado (sqrt) _V2")
 ```
 
 
@@ -509,17 +512,12 @@ Demanda_electrico_sin_differencia_test_V2
 library(astsa)
 
 # Fit the SARIMA model
-SARIMA_1_2_1_Demanda_electrico_V2 <- astsa::sarima(Demanda_electrico_sin_differencia_train_V2, p=1, d=2, q=1)
+SARIMA_1_2_1_Demanda_electrico_V2 <- astsa::sarima( Demanda_electrico_sin_differencia_train_V2 , p=1, d=1, q=1)
 
 # Print the model summary
 summary(SARIMA_1_2_1_Demanda_electrico_V2)
 
 ```
-The Ljung–Box test may be defined as:
-
-
-H0: The data are independently distributed (i.e. the correlations in the population from which the sample is taken are 0, so that any observed correlations in the data result from randomness of the sampling process).
-Ha: The data are not independently distributed; they exhibit serial correlation.
 
 
 
@@ -528,7 +526,7 @@ Ha: The data are not independently distributed; they exhibit serial correlation.
 # Get the predictors
 
 
-pred_SARIMA_1_2_1_Demanda_electrico_V2 <- sarima.for(Demanda_electrico_sin_differencia_train_V2, n.ahead=12,1,2,1)
+pred_SARIMA_1_2_1_Demanda_electrico_V2 <- sarima.for(Demanda_electrico_sin_differencia_train_V2, n.ahead=12,1,1,1)
 pred_SARIMA_1_2_1_Demanda_electrico_V2
 
 
@@ -554,30 +552,6 @@ accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,pred_SARIMA_1_2_1_De
 
 #### Training and testing sets (ORIGINAL) para aplicar modeo SARIMA + PDQ S
 
-
-```{r}
-
-# Split the data into training and testing sets
-
-
-# Subset the data to keep rows from the beginning until train_end and all columns
-Demanda_electrico_sin_differencia_train_V2 <- Demanda_electrico_importado.ts_V2[1:201]
-Demanda_electrico_sin_differencia_train_V2
-
-
-
-```
-
-```{r}
-# Subset the data to keep rows from the beginning until train_end and all columns
-
-
-Demanda_electrico_sin_differencia_test_V2 <- Demanda_electrico_importado.ts_V2[202:213]
-Demanda_electrico_sin_differencia_test_V2
-
-
-
-```
 
 #### Ajustae y predicicon de Demanda_electrico con modelo SARIMA + PDQ S
 
@@ -607,8 +581,6 @@ forecast_SARIMA_PDQS_Demanda_electrico_V2_model$mean
 ```{r}
 accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,forecast_SARIMA_PDQS_Demanda_electrico_V2_model$mean )
 ```
-
-
 
 
 
@@ -694,12 +666,17 @@ accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,exp(pred_SARIMA_1_1_
 
 
 
-
-
 #### Then we are able to apply the HoltWinters method 
 
 ```{r}
-Demanda_electrico_HW_V2 <- HoltWinters(Demanda_electrico_importado.ts_V2)
+ts(Demanda_electrico_sin_differencia_train_V2, frequency = 12)
+```
+
+
+```{r}
+
+
+Demanda_electrico_HW_V2 <- HoltWinters(ts(Demanda_electrico_sin_differencia_train_V2, frequency = 12))
 head(Demanda_electrico_HW_V2)
 typeof(Demanda_electrico_HW_V2)
 ```
@@ -755,8 +732,6 @@ Demanda_electrico_HW_forecast_V2$mean
 ```
 
 
-
-
 #### Calculo de errores de Demanda_electrico_HW_forecast
 
 ```{r}
@@ -765,6 +740,83 @@ library(forecast)
 accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,Demanda_electrico_HW_forecast_V2$mean )
 ```
 
+
+
+
+
+
+#### Training and testing sets (WMA) para aplicar modeo SARIMA  
+
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+Demanda_electrico_sin_differencia_WMA_train_V2 <- Demanda_electrico_ts_WMA_V2[1:201]
+head(Demanda_electrico_sin_differencia_WMA_train_V2)
+
+Demanda_electrico_sin_differencia_WMA_train_V2 <-na.omit(Demanda_electrico_sin_differencia_WMA_train_V2)
+head(Demanda_electrico_sin_differencia_WMA_train_V2)
+
+```
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+Demanda_electrico_sin_differencia_WMA_test_V2 <- Demanda_electrico_ts_WMA_V2[202:213]
+Demanda_electrico_sin_differencia_WMA_test_V2
+
+
+
+```
+
+#### Ajustae y predicicon de Demanda_electrico con modelo SARIMA 
+
+
+```{r}
+#install.packages("astsa")
+library(astsa)
+
+# Fit the SARIMA model
+SARIMA_1_1_1_Demanda_electrico_WMA_V2 <- astsa::sarima(Demanda_electrico_sin_differencia_WMA_train_V2, p=1, d=1, q=1)
+
+# Print the model summary
+summary(SARIMA_1_1_1_Demanda_electrico_WMA_V2)
+
+```
+
+
+
+
+```{r}
+
+# Get the predictors
+
+
+pred_SARIMA_1_1_1_Demanda_electrico_WMA_V2 <- sarima.for(Demanda_electrico_sin_differencia_WMA_train_V2, n.ahead=12,1,1,1)
+pred_SARIMA_1_1_1_Demanda_electrico_WMA_V2
+
+
+```
+
+
+```{r}
+pred_SARIMA_1_1_1_Demanda_electrico_WMA_V2$pred
+```
+
+
+
+
+
+#### Calculo de errores de Demanda_electrico_sin_differencia_WMA con SARIMA
+
+```{r}
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,pred_SARIMA_1_1_1_Demanda_electrico_WMA_V2$pred )
+```
 
 
 
