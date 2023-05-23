@@ -87,6 +87,13 @@ Demanda_electrico_importado[186+12,]
 Demanda_electrico_importado$Demanded_Gas[186] <- Demanda_electrico_importado_promedio_junio
 Demanda_electrico_importado$Demanded_Gas[186+12] <- Demanda_electrico_importado_promedio_junio
 
+
+# este es octubre de 2020
+Demanda_electrico_importado$Demanded_Gas[180] <- 3250
+
+# este es Enero de 2021
+Demanda_electrico_importado$Demanded_Gas[193] <- 3550
+
 Demanda_electrico_importado
 ```
 
@@ -445,7 +452,7 @@ Demanda_electrico_sin_differencia_test_V2
 library(astsa)
 
 # Fit the SARIMA model
-SARIMA_1_1_1_Demanda_electrico_V2 <- astsa::sarima(Demanda_electrico_sin_differencia_train_V2, p=1, d=1, q=1)
+SARIMA_1_1_1_Demanda_electrico_V2 <- astsa::sarima(Demanda_electrico_sin_differencia_train_V2, p=1, d=2, q=1)
 
 # Print the model summary
 summary(SARIMA_1_1_1_Demanda_electrico_V2)
@@ -464,7 +471,7 @@ Ha: The data are not independently distributed; they exhibit serial correlation.
 # Get the predictors
 
 
-pred_SARIMA_1_1_1_Demanda_electrico_V2 <- sarima.for(Demanda_electrico_sin_differencia_train_V2, n.ahead=12,1,1,1)
+pred_SARIMA_1_1_1_Demanda_electrico_V2 <- sarima.for(Demanda_electrico_sin_differencia_train_V2, n.ahead=12,1,2,1)
 pred_SARIMA_1_1_1_Demanda_electrico_V2
 
 
