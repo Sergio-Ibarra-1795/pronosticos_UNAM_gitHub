@@ -99,7 +99,7 @@ Demanda_electrico_ts_SMA <- SMA(Demanda_electrico_importado.ts, n=12)
 ```{r}
 plot(Demanda_electrico_ts_SMA, col = "green", main = "Demanda electrico 'original'con SMA ")
 lines(Demanda_electrico_importado.ts, col="red")
-legend("bottomright", legend = c("Demanda electrico 'original'con SMA", "Demanda electrico ´original´"), col = c("green", "red"), lty = 1)
+legend("bottomright", legend = c("Demanda electrico 'original'con Simple Moving Average (SMA)", "Demanda electrico ´original´"), col = c("green", "red"), lty = 1)
 ```
 
 
@@ -139,7 +139,7 @@ Demanda_electrico_ts_log_transformado <- log(Demanda_electrico_importado.ts)
 
 
 ```{r}
-plot(Demanda_electrico_ts_log_transformado, col = "brown", main = "Demanda electrico 'original'transformado (log) ")
+plot(Demanda_electrico_ts_log_transformado, col = "brown", main = "Demanda electrico 'original'transformado usando la funcion log")
 ```
 
 
@@ -571,22 +571,11 @@ plot(prediccion_demanda_electrico_lineal_mas_datos1$fit)
 
 
 
-
-
 #### Calculo de errores del lineal Demanda_electrico con Poblacion_en_Mexico y PIB_Millones_de_Dolares para los datos de Demanda_electrico
 
 ```{r}
-valores_calculados_demanda_electrico_lineal_mas_datos1_simple1 <- prediccion_demanda_electrico_lineal_mas_datos1$fit
-
-# Calculate MAPE
-mape_electrico_lm_mas_datos1 <- mean(abs((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_mas_datos1_simple1) / Demanda_electrico_importado$Demanded_Gas[202:213])) * 100
-cat("El MAPE del 'modelo lineal generalizado con PIB y Poblacion para los datos de Demanda_electrico es:", round(mape_electrico_lm_mas_datos1,2),"%\n")
-
-# Calculate RMSE
-rmse_electrico_lm_mas_datos1 <- sqrt(mean((Demanda_electrico_importado$Demanded_Gas[202:213] - valores_calculados_demanda_electrico_lineal_mas_datos1_simple1)^2))
-cat("El RMSE de modelo lineal generalizado con PIB y Poblacion para los datos de Demanda_electrico es:", round(rmse_electrico_lm_mas_datos1,2),"\n")
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213],valores_calculados_demanda_electrico_lineal_mas_datos1_simple1)
 ```
-
 
 
 ##### Vamos a ajustar un modelo lineal de Demanda_electrico con Poblacion_en_Mexico SIN PIB_Millones_de_Dolares (family = gaussian(link="identity"))
