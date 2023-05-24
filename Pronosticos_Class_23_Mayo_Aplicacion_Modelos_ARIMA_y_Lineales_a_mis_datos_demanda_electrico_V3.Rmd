@@ -1,5 +1,5 @@
 ---
-title: "Pronosticos_Class_23_Mayo_Aplicacion_Modelos_ARIMA_y_Lineales_a_mis_datos_demanda_electrico_V2.1"
+title: "Pronosticos_Class_23_Mayo_Aplicacion_Modelos_ARIMA_y_Lineales_a_mis_datos_demanda_electrico_V3"
 author: "Sergi"
 date: "2023-02-27"
 output: html_document
@@ -142,15 +142,15 @@ Demanda_electrico_importado
 #### Convertimos los datos de Demanda_electrico a Serie de tiempo 
 
 ```{r}
-Demanda_electrico_importado.ts_V2<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1))
-head(Demanda_electrico_importado.ts_V2)
+Demanda_electrico_importado.ts_V3<- ts(Demanda_electrico_importado$Demanded_Gas, frequency = 12, start =c(2005,1))
+head(Demanda_electrico_importado.ts_V3)
 
-typeof(Demanda_electrico_importado.ts_V2)
+typeof(Demanda_electrico_importado.ts_V3)
 
 ```
 
 ```{r}
-hist(Demanda_electrico_importado.ts_V2)
+hist(Demanda_electrico_importado.ts_V3)
 ```
 
 
@@ -506,7 +506,7 @@ summary(adf_test_electrico_diferencia1_V2)
 
 
 
-#### Training and testing sets (ORIGINAL) para aplicar modeo SARIMA  
+#### Training and testing sets (ORIGINAL) para aplicar modeo SARIMA  (Hatsa 1:170)
 
 
 ```{r}
@@ -515,8 +515,8 @@ summary(adf_test_electrico_diferencia1_V2)
 
 
 # Subset the data to keep rows from the beginning until train_end and all columns
-Demanda_electrico_sin_differencia_train_V2 <- Demanda_electrico_importado.ts_V2[1:201]
-Demanda_electrico_sin_differencia_train_V2
+Demanda_electrico_sin_differencia_train_V3 <- Demanda_electrico_importado.ts_V3[1:170]
+Demanda_electrico_sin_differencia_train_V3
 
 
 
@@ -526,14 +526,14 @@ Demanda_electrico_sin_differencia_train_V2
 # Subset the data to keep rows from the beginning until train_end and all columns
 
 
-Demanda_electrico_sin_differencia_test_V2 <- Demanda_electrico_importado.ts_V2[202:213]
-Demanda_electrico_sin_differencia_test_V2
+Demanda_electrico_sin_differencia_test_V3 <- Demanda_electrico_importado.ts_V3[202:213]
+Demanda_electrico_sin_differencia_test_V3
 
 
 
 ```
 
-#### Ajustae y predicicon de Demanda_electrico con modelo SARIMA 
+#### Ajustae y predicicon de Demanda_electrico con modelo SARIMA (Hatsa 1:170)
 
 
 ```{r}
@@ -541,10 +541,10 @@ Demanda_electrico_sin_differencia_test_V2
 library(astsa)
 
 # Fit the SARIMA model
-SARIMA_1_2_1_Demanda_electrico_V2 <- astsa::sarima( Demanda_electrico_sin_differencia_train_V2 , p=1, d=1, q=1)
+SARIMA_1_2_1_Demanda_electrico_V3 <- astsa::sarima( Demanda_electrico_sin_differencia_train_V3 , p=1, d=1, q=1)
 
 # Print the model summary
-summary(SARIMA_1_2_1_Demanda_electrico_V2)
+summary(SARIMA_1_2_1_Demanda_electrico_V3)
 
 ```
 
@@ -555,24 +555,24 @@ summary(SARIMA_1_2_1_Demanda_electrico_V2)
 # Get the predictors
 
 
-pred_SARIMA_1_2_1_Demanda_electrico_V2 <- sarima.for(Demanda_electrico_sin_differencia_train_V2, n.ahead=12,1,1,1)
-pred_SARIMA_1_2_1_Demanda_electrico_V2
+pred_SARIMA_1_2_1_Demanda_electrico_V3 <- sarima.for(Demanda_electrico_sin_differencia_train_V3, n.ahead=12,1,1,1)
+pred_SARIMA_1_2_1_Demanda_electrico_V3
 
 
 ```
 
 
 ```{r}
-pred_SARIMA_1_2_1_Demanda_electrico_V2$pred
+pred_SARIMA_1_2_1_Demanda_electrico_V3$pred
 ```
 
 
 
 
-#### Calculo de errores del Demanda_electrico_original.ts con SARIMA
+#### Calculo de errores del Demanda_electrico_original.ts con SARIMA (Hatsa 1:170)
 
 ```{r}
-accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,pred_SARIMA_1_2_1_Demanda_electrico_V2$pred )
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,pred_SARIMA_1_2_1_Demanda_electrico_V3$pred )
 ```
 
 
@@ -588,27 +588,28 @@ accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,pred_SARIMA_1_2_1_De
 library(forecast)
 
 # Convert the data to a univariate time series
-SARIMA_PDQS_Demanda_electrico_V2 <- ts(Demanda_electrico_sin_differencia_train_V2)
+SARIMA_PDQS_Demanda_electrico_V3 <- ts(Demanda_electrico_sin_differencia_train_V3)
 
 # Fit the SARIMA model
-SARIMA_PDQS_Demanda_electrico_V2_model <- Arima(SARIMA_PDQS_Demanda_electrico_V2, order = c(1, 1, 1), seasonal = list(order = c(0, 1, 1), period = 12))
+SARIMA_PDQS_Demanda_electrico_V2_model_2 <- Arima(SARIMA_PDQS_Demanda_electrico_V3, order = c(1, 1, 1), seasonal = list(order = c(0, 1, 1), period = 12))
 
 # Forecast for the next 12 periods
-forecast_SARIMA_PDQS_Demanda_electrico_V2_model <- forecast(SARIMA_PDQS_Demanda_electrico_V2_model, h = 12)
+forecast_SARIMA_PDQS_Demanda_electrico_V2_model_2 <- forecast(SARIMA_PDQS_Demanda_electrico_V2_model_2, h = 12)
 
 # Print the forecasted values
-print(forecast_SARIMA_PDQS_Demanda_electrico_V2_model)
+print(forecast_SARIMA_PDQS_Demanda_electrico_V2_model_2)
 ```
 
+
 ```{r}
-forecast_SARIMA_PDQS_Demanda_electrico_V2_model$mean
+forecast_SARIMA_PDQS_Demanda_electrico_V2_model_2$mean
 ```
 
 
 #### Calculo de errores del Demanda_electrico_original.ts con SARIMA + PDQ S
 
 ```{r}
-accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,forecast_SARIMA_PDQS_Demanda_electrico_V2_model$mean )
+accuracy(Demanda_electrico_importado$Demanded_Gas[202:213] ,forecast_SARIMA_PDQS_Demanda_electrico_V2_model_2$mean )
 ```
 
 

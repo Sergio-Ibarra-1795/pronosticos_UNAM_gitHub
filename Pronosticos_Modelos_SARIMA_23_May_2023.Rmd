@@ -1,0 +1,164 @@
+---
+title: "Pronosticos_Modelos_SARIMA_23_May_2023"
+author: "Sergibar"
+date: "2023-05-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Modelos SARIMA (Ejemplo para data prodn)
+
+```{r}
+
+data(prodn)
+
+plot(prodn)
+```
+
+
+```{r}
+prodn_train <- prodn[1:360]
+prodn_test <- prodn[360:372]
+```
+
+
+
+```{r}
+acf(prodn_train)
+pacf(prodn_train)
+```
+
+
+```{r}
+prodn_train_SAARIMA_1 <- sarima(prodn_train, p=2,d=1,q=2, P=0, Q=1, D=1, S=12)
+prodn_train_SAARIMA_1
+```
+
+
+```{r}
+
+forecast_prodn_train_SAARIMA_1 <- sarima.for(prodn_train, n.ahead = 24, 2,1,2,0,1,1,12)
+
+forecast_prodn_train_SAARIMA_1
+
+
+```
+
+
+
+
+## Para los datos de USAccDeaths
+
+```{r}
+data(USAccDeaths)
+USAccDeaths
+
+```
+
+
+
+```{r}
+
+
+plot(USAccDeaths)
+
+```
+
+```{r}
+
+# Check the number of points in the time series
+length(USAccDeaths)
+
+
+summary(USAccDeaths)
+
+```
+
+
+
+
+#### Separamos en train y test
+
+```{r}
+USAccDeaths_train <- USAccDeaths[1:66]
+USAccDeaths_train
+
+USAccDeaths_test <- USAccDeaths[67:72]
+USAccDeaths_test
+```
+
+
+
+
+#### ACF & PACF de la serie sin diferenciar 
+
+```{r}
+acf(USAccDeaths_train)
+pacf(USAccDeaths_train)
+```
+
+
+#### Perform ADF test for stationarity for USAccDeaths_train sin diferenciar
+
+```{r}
+library(urca)
+
+# Perform ADF test for stationarity
+adf_USAccDeaths_train_sin_doferenciar <- ur.df(USAccDeaths_train)
+
+# Print the ADF test results
+summary(adf_USAccDeaths_train_sin_doferenciar)
+```
+
+
+```{r}
+SARIMA_USAccDeaths_train <- sarima(USAccDeaths_train, p=0,d=0,q=2, P=0, D=1, Q=1, S=12)
+SARIMA_USAccDeaths_train
+```
+
+
+```{r}
+
+forecast_SARIMA_USAccDeaths_train <- sarima.for(USAccDeaths_train, n.ahead = 6, 0,0,2,0,1,1,12)
+
+forecast_SARIMA_USAccDeaths_train
+
+
+```
+
+```{r}
+forecast_SARIMA_USAccDeaths_train$pred
+```
+
+```{r}
+accuracy(USAccDeaths_test, forecast_SARIMA_USAccDeaths_train$pred)
+```
+
+
+
+
+
+```{r}
+
+forecast_SARIMA_USAccDeaths_train_2 <- sarima.for(log(USAccDeaths_train), n.ahead = 6, 0,0,2,0,1,1,12)
+
+forecast_SARIMA_USAccDeaths_train_2
+
+
+```
+
+```{r}
+correccion <- exp(forecast_SARIMA_USAccDeaths_train_2$pred)
+correccion
+```
+
+```{r}
+accuracy(USAccDeaths_test, correccion)
+```
+
+
+
+
