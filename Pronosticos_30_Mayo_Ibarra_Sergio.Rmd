@@ -1,0 +1,499 @@
+---
+title: "Pronosticos_30_Mayo_Ibarra_Sergio"
+author: "Sergibar"
+date: "2023-05-30"
+output: html_document
+---
+
+##Pronósticos 
+## Dr. Jair Morales Camarena 
+## Exmámen Final
+## Alumno: Ibarra Ramírez Sergio 
+
+
+Importación de librerias 
+```{r}
+
+
+library(tidyverse)      # data manipulation and visualization
+library(lubridate)      # easily work with dates and times
+library(fpp2)           # working with time series data
+library(zoo)
+library(ggplot2)
+library(plyr)
+library(dplyr)
+library(knitr)
+library(TTR)
+library(hydroGOF)
+
+
+```
+
+### Importación de los datos 
+```{r}
+
+#Primero importamos la data 
+
+datos_original <-read.csv("Datos.csv", header= TRUE)
+
+```
+
+
+Nos aseguramos que la data se haya importado correctamente
+```{r}
+head(datos_original)
+summary(datos_original)
+typeof(datos_original)
+dim(datos_original)
+```
+
+
+
+Transformamos el tipo de dato de la columna DATE  a as.date column 
+
+```{r}
+datos_original$Date <- as.Date(datos_original$Date, format = "%m/%d/%Y")
+head(datos_original)
+tail(datos_original)
+
+```
+
+
+
+
+#### Convertimos los datos_original a Serie de tiempo 
+
+```{r}
+datos_original_ts<- ts(datos_original$VARIABLE, frequency = 12, start =c(2005,1))
+head(datos_original_ts)
+typeof(datos_original_ts)
+
+```
+
+
+Graficamos la serie del tiempo
+```{r}
+plot(datos_original_ts, col = "violet", main = "Data_original")
+
+```
+
+
+
+### Analicemos los valores de la variable y 
+
+```{r}
+hist(datos_original_ts)
+```
+
+
+
+#### Simple Moving Average (SMA)
+
+```{r}
+
+# Load the TTR package
+library(TTR)
+
+datos_original_ts_SMA <- SMA(datos_original_ts, n=6)
+```
+
+
+```{r}
+plot(datos_original_ts_SMA, col = "green", main = "Datos_original con SMA ")
+lines(datos_original_ts, col="violet")
+legend("bottomright", legend = c("Datos_original con SMA", "Datos_original"), col = c("green", "violet"), lty = 1)
+```
+
+
+
+
+#### Weighted Moving Average (SMA)
+
+```{r}
+
+# Load the TTR package
+library(TTR)
+
+datos_original_ts_WMA <- WMA(datos_original_ts, n = 6, wts = c(0.05, 0.05, 0.1, 0.2, 0.3, 0.3))
+```
+
+
+
+```{r}
+plot(datos_original_ts_WMA, col = "blue", main = "Datos_original con WMA ")
+lines(datos_original_ts, col="violet")
+legend("bottomright", legend = c("Datos_original con WMA", "Datos_original"), col = c("blue", "violet"), lty = 1)
+```
+
+
+
+#### Separamos el df Demanda_electrico_importado en data sets train y test
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+datos_original_ts_train <- datos_original_ts[1:201,]
+head(datos_original_ts_train)
+tail(datos_original_ts_train)
+dim(datos_original_ts_train)
+
+
+
+```
+
+
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+datos_original_ts_test <- datos_original_ts[202:213,]
+head(datos_original_ts_test)
+dim(datos_original_ts_test)
+
+
+
+```
+
+
+
+
+## Intentemos ahora aplicar el modelo HoltWinters method 
+
+
+```{r}
+
+
+datos_original_ts_HW <- HoltWinters(datos_original_ts_train)
+head(datos_original_ts_HW)
+typeof(datos_original_ts_HW)
+```
+
+
+### Ploteo de datos_original_ts_HW
+
+```{r}
+plot(datos_original_ts, col = "red", main = "Datos_orignal Holt-winters original vs Datos original")
+lines(datos_original_ts_HW$x , col='pink')
+```
+
+
+
+Vamos a plotear el forecast
+
+```{r}
+plot(datos_original_ts_HW)
+
+```
+
+```{r}
+head(datos_original_ts_HW$fitted)
+tail(datos_original_ts_HW$fitted)
+```
+
+
+HAGAMOS COMO TAL EL FORECAST DEL MODELO HOLT-WINTER PARA EL CASO DE Datos_orignal
+
+#### Calculo de predicción del MODELO HOLT-WINTER PARA EL CASO DE Datos_orignal
+
+```{r}
+
+library(forecast)
+
+datos_original_ts_HW_forecast <- forecast(datos_original_ts_HW, h=12, level=0.95)
+head(datos_original_ts_HW_forecast)
+```
+
+
+
+
+```{r}
+plot(datos_original_ts_HW_forecast)
+datos_original_ts_HW_forecast$mean
+```
+
+
+#### Calculo de errores del MODELO HOLT-WINTER PARA EL CASO DE Datos_orignal
+
+```{r}
+library(forecast)
+
+accuracy(datos_original_ts$VARIABLE[202:213] ,datos_original_ts_HW_forecast$mean )
+```
+
+
+
+
+
+
+## Ahora intentemos ajustar un 'modelo lineal generalizado simple' 
+
+
+```{r}
+tend <- c(1:213)
+
+dim(tend)
+
+mes=c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
+
+rep_mes <- rep(mes,18)
+
+
+
+datos_original_ts_train_frame <- data.frame(datos_original_ts_train,rep_mes[1:201],tend[1:201])
+head(datos_original_ts_train_frame)
+tail(datos_original_ts_train_frame)
+dim(datos_original_ts_train_frame)
+
+```
+
+```{r}
+datos_original_ts_train_frame$rep_mes <-datos_original_ts_train_frame$rep_mes.1.201
+datos_original_ts_train_frame$rep_mes.1.201. <- NULL
+datos_original_ts_train_frame$tend <-datos_original_ts_train_frame$tend.1.201.
+datos_original_ts_train_frame$tend.1.201. <- NULL
+
+datos_original_ts_train_frame
+```
+
+
+#### Se 'entrena' (en este caso, se define) al modelo lineal 'simple' con los datos de train 
+
+```{r}
+modelo_lineal_simple1_datos_original <- glm (VARIABLE_Y ~  rep_mes + tend, data=datos_original_ts_train_frame, family = gaussian(link = identity))
+datos_original_lineal_simple1
+```
+
+
+Se obtiene el summary y plot del modelo lineal 'simple'
+
+```{r}
+summary(modelo_lineal_simple1_datos_original)
+```
+
+
+```{r}
+plot(modelo_lineal_simple1_datos_original)
+```
+
+#### Testeo del 'modelo lineal generalizado simple'  haciendo la predición de los datos de test 
+```{r}
+
+
+datos_original_ts_test_frame <- data.frame(datos_original_ts_test,rep_mes[202:213],tend[202:213])
+head(datos_original_ts_test_frame)
+tail(datos_original_ts_test_frame)
+dim(datos_original_ts_test_frame)
+
+```
+
+
+
+```{r}
+datos_original_ts_test_frame$rep_mes <-datos_original_ts_test_frame$rep_mes.202.213.
+datos_original_ts_test_frame$rep_mes.202.213. <- NULL
+datos_original_ts_test_frame$tend <-datos_original_ts_test_frame$tend.202.213.
+datos_original_ts_test_frame$tend.202.213. <- NULL
+
+datos_original_ts_test_frame
+```
+
+
+
+
+#### Calculo de predicción del 'modelo lineal generalizado simple' para los datos_original
+
+```{r}
+prediccion_modelo_lineal_simple1_datos_original <- predict(modelo_lineal_simple1_datos_original, newdata = datos_original_ts_test_frame, se.fit = TRUE)
+
+
+prediccion_modelo_lineal_simple1_datos_original
+```
+
+```{r}
+plot(prediccion_modelo_lineal_simple1_datos_original$fit)
+```
+
+
+
+
+
+#### Calculo de errores del 'modelo lineal generalizado simple' para los datos_original
+
+
+```{r}
+accuracy(datos_original_ts$VARIABLE[202:213] , prediccion_modelo_lineal_simple1_datos_original$fit)
+```
+
+
+
+
+## Modelo SARIMA para Datos_original
+
+
+#### Determinación de ACF & PACF para el caso de la data_original (SIN ESTACIONALIZAR)
+
+```{r}
+#install.packages("forecast")
+library(forecast)
+
+#par(mfrow=c(2,1))
+
+acf_datos_original_ts_sin_diferenciar <- Acf(datos_original_ts, lag.max = 100, ci.type = "ma")
+acf_datos_original_ts_sin_diferenciar
+
+
+pacf_datos_original_ts_sin_diferenciar <- Pacf(datos_original_ts, lag.max = 100, ci.type = "ma")
+pacf_datos_original_ts_sin_diferenciar
+
+```
+
+
+#### Se lleva a cabo el tet de Dickey-Fulley (Ho: Serie no estacionaria) a la serie de datos_original <sin diferenciar>
+
+```{r}
+# Install and load the "urca" package
+#install.packages("urca")
+library(urca)
+
+# Perform ADF test for stationarity
+adf_test_datos_original_ts <- ur.df(datos_original_ts)
+
+# Print the ADF test results
+summary(adf_test_datos_original_ts)
+
+```
+
+
+#### Vamos a diferenciar la serie de datos_orignal 'para hacerlo estacionaria'
+
+```{r}
+# Calculate the difference between consecutive elements
+datos_original_ts_diferencia1 <- diff(datos_original_ts, differences = 1)
+
+# Print the results
+print(datos_original_ts_diferencia1)
+
+```
+
+
+
+#### ACF & PACF para los datos_original con 1 diferencia  'estacionariazada'
+
+
+```{r}
+library(forecast)
+
+#par(mfrow=c(2,1))
+
+acf_datos_original_ts_diferencia1 <- Acf(datos_original_ts_diferencia1, lag.max = 100, ci.type = "ma")
+acf_datos_original_ts_diferencia1
+
+
+pacf_datos_original_ts_diferencia1 <- Pacf(datos_original_ts_diferencia1, lag.max = 100, ci.type = "ma")
+pacf_datos_original_ts_diferencia1
+```
+
+
+#### Se lleva a cabo el tet de Dickey-Fulley (Ho: Serie no estacionaria) a la serie de datos_ con una diferencia
+
+
+```{r}
+# Install and load the "urca" package
+#install.packages("urca")
+library(urca)
+
+# Perform ADF test for stationarity
+adf_test_datos_original_ts_diferencia1 <- ur.df(datos_original_ts_diferencia1)
+
+# Print the ADF test results
+summary(adf_test_datos_original_ts_diferencia1)
+
+```
+
+
+
+#### Ajustae y predicicon de Demanda_electrico con modelo ARIMA 
+
+
+```{r}
+#install.packages("astsa")
+library(astsa)
+
+# Fit the SARIMA model
+ARIMA_1_2_1_datos_original <- astsa::sarima( datos_original_ts_train , p=1, d=1, q=1)
+
+# Print the model summary
+summary(ARIMA_1_2_1_datos_original)
+
+```
+
+
+#### Calculo de predicción del ARIMA para los datos_original
+
+```{r}
+
+# Get the predictors
+
+
+pred_ARIMA_1_2_1_datos_original <- sarima.for(datos_original_ts_train, n.ahead=12,1,1,1)
+pred_ARIMA_1_2_1_datos_original
+
+
+```
+
+
+
+```{r}
+pred_ARIMA_1_2_1_datos_original$pred
+```
+
+
+
+
+#### Calculo de errores del modelo ARIMA para los datos_original
+
+```{r}
+accuracy(datos_original_ts$VARIABLE[202:213] ,pred_ARIMA_1_2_1_datos_original$pred )
+```
+
+
+
+
+#### Ajustae y predicicon de Demanda_original con modelo SARIMA + PDQ S
+
+
+#### Calculo de predicción del SARIMA PDQ S para los datos_original
+```{r}
+library(forecast)
+
+# Convert the data to a univariate time series
+SARIMA_PDQS_datos_original <- ts(datos_original_ts_train)
+
+# Fit the SARIMA model
+SARIMA_PDQS_datos_original <- Arima(datos_original_ts_train, order = c(1, 1, 1), seasonal = list(order = c(0, 1, 1), period = 12))
+
+# Forecast for the next 12 periods
+forecast_SARIMA_PDQS_datos_original <- forecast(SARIMA_PDQS_datos_original, h = 12)
+
+# Print the forecasted values
+print(forecast_SARIMA_PDQS_datos_original)
+```
+
+
+
+```{r}
+forecast_SARIMA_PDQS_datos_original$mean
+```
+
+
+#### Calculo de errores del Datos_orignal con SARIMA + PDQ S
+
+```{r}
+accuracy(datos_original_ts$VARIABLE[202:213] ,forecast_SARIMA_PDQS_datos_original$mean )
+```
+
+
