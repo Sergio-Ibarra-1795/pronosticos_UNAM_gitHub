@@ -79,6 +79,23 @@ plot(datos_original_ts, col = "violet", main = "Data_original")
 
 
 
+### Vamos a descomponer la data usando el metodo decompose para entender sus compoentes de tren, seasonalidad y aleatorio
+
+```{r}
+datos_original_ts_decompose <- decompose(datos_original_ts_decompose)
+datos_original_ts_decompose
+```
+
+
+Now let´s plot the (trend, seasonal and random components of the decompose analysis)
+
+```{r}
+plot(datos_original_ts_decompose)
+```
+
+
+
+
 ### Analicemos los valores de la variable y 
 
 ```{r}
@@ -87,7 +104,13 @@ hist(datos_original_ts)
 
 
 
-#### Simple Moving Average (SMA)
+```{r}
+summary(datos_original_ts)
+```
+
+
+
+#### Simple Moving Average (SMA) de datos_original
 
 ```{r}
 
@@ -95,6 +118,8 @@ hist(datos_original_ts)
 library(TTR)
 
 datos_original_ts_SMA <- SMA(datos_original_ts, n=6)
+
+## datos_original_ts_SMA <- ma(datos_original_ts, oder=2, center=TRUE)
 ```
 
 
@@ -102,6 +127,25 @@ datos_original_ts_SMA <- SMA(datos_original_ts, n=6)
 plot(datos_original_ts_SMA, col = "green", main = "Datos_original con SMA ")
 lines(datos_original_ts, col="violet")
 legend("bottomright", legend = c("Datos_original con SMA", "Datos_original"), col = c("green", "violet"), lty = 1)
+```
+
+
+#### Calculo de predección con Simple Moving Average (SMA) de datos_original
+
+```{r}
+library(forecast)
+
+forecast_datos_original_ts_SMA<-forecast(datos_original_ts_SMA, h=12)
+forecast_datos_original_ts_SMA
+plot(forecast_datos_original_ts_SMA)
+```
+
+#### Calculo de errror con Simple Moving Average (SMA) de datos_original
+
+```{r}
+library(forecast)
+
+accuracy(forecast_datos_original_ts_SMA)
 ```
 
 
@@ -124,6 +168,29 @@ plot(datos_original_ts_WMA, col = "blue", main = "Datos_original con WMA ")
 lines(datos_original_ts, col="violet")
 legend("bottomright", legend = c("Datos_original con WMA", "Datos_original"), col = c("blue", "violet"), lty = 1)
 ```
+
+
+
+
+
+#### Calculo de predección con Weighted Moving Average (SMA) de datos_original
+
+```{r}
+library(forecast)
+
+forecast_datos_original_ts_WMA<-forecast(datos_original_ts_WMA, h=12)
+forecast_datos_original_ts_WMA
+plot(forecast_datos_original_ts_WMA)
+```
+
+#### Calculo de errror con Simple Moving Average (SMA) de datos_original
+
+```{r}
+library(forecast)
+
+accuracy(forecast_datos_original_ts_WMA)
+```
+
 
 
 
