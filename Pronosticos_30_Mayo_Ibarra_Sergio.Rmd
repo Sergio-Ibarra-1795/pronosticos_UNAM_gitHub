@@ -29,6 +29,7 @@ library(hydroGOF)
 
 ```
 
+
 ### Importación de los datos 
 ```{r}
 
@@ -110,88 +111,6 @@ summary(datos_original_ts)
 
 
 
-#### Simple Moving Average (SMA) de datos_original
-
-```{r}
-
-# Load the TTR package
-library(TTR)
-
-datos_original_ts_SMA <- SMA(datos_original_ts, n=6)
-
-## datos_original_ts_SMA <- ma(datos_original_ts, oder=2, center=TRUE)
-```
-
-
-```{r}
-plot(datos_original_ts_SMA, col = "green", main = "Datos_original con SMA ")
-lines(datos_original_ts, col="violet")
-legend("bottomright", legend = c("Datos_original con SMA", "Datos_original"), col = c("green", "violet"), lty = 1)
-```
-
-
-#### Calculo de predección con Simple Moving Average (SMA) de datos_original
-
-```{r}
-library(forecast)
-
-forecast_datos_original_ts_SMA<-forecast(datos_original_ts_SMA, h=12)
-forecast_datos_original_ts_SMA
-plot(forecast_datos_original_ts_SMA)
-```
-
-#### Calculo de errror con Simple Moving Average (SMA) de datos_original
-
-```{r}
-library(forecast)
-
-accuracy(forecast_datos_original_ts_SMA)
-```
-
-
-
-
-#### Weighted Moving Average (SMA)
-
-```{r}
-
-# Load the TTR package
-library(TTR)
-
-datos_original_ts_WMA <- WMA(datos_original_ts, n = 6, wts = c(0.05, 0.05, 0.1, 0.2, 0.3, 0.3))
-```
-
-
-
-```{r}
-plot(datos_original_ts_WMA, col = "blue", main = "Datos_original con WMA ")
-lines(datos_original_ts, col="violet")
-legend("bottomright", legend = c("Datos_original con WMA", "Datos_original"), col = c("blue", "violet"), lty = 1)
-```
-
-
-
-
-
-#### Calculo de predección con Weighted Moving Average (SMA) de datos_original
-
-```{r}
-library(forecast)
-
-forecast_datos_original_ts_WMA<-forecast(datos_original_ts_WMA, h=12)
-forecast_datos_original_ts_WMA
-plot(forecast_datos_original_ts_WMA)
-```
-
-#### Calculo de errror con Simple Moving Average (SMA) de datos_original
-
-```{r}
-library(forecast)
-
-accuracy(forecast_datos_original_ts_WMA)
-```
-
-
 
 
 #### Separamos el df Demanda_electrico_importado en data sets train y test
@@ -226,6 +145,94 @@ dim(datos_original_ts_test)
 ```
 
 
+#### Simple Moving Average (SMA) de datos_original
+
+```{r}
+
+# Load the TTR package
+library(TTR)
+
+datos_original_ts_SMA <- SMA(datos_original_ts, n=6)
+
+datos_original_ts_SMA_pc <- SMA(datos_original_ts_train, n=6)
+
+
+
+## datos_original_ts_SMA <- ma(datos_original_ts, oder=2, center=TRUE)
+```
+
+
+
+```{r}
+plot(datos_original_ts_SMA, col = "green", main = "Datos_original con SMA ")
+lines(datos_original_ts, col="violet")
+legend("bottomright", legend = c("Datos_original con SMA", "Datos_original"), col = c("green", "violet"), lty = 1)
+```
+
+
+#### Calculo de predección con Simple Moving Average (SMA) de datos_original
+
+```{r}
+library(forecast)
+
+forecast_datos_original_ts_SMA<-forecast(datos_original_ts_SMA_pc, h=12)
+forecast_datos_original_ts_SMA
+plot(forecast_datos_original_ts_SMA)
+```
+
+#### Calculo de errror con Simple Moving Average (SMA) de datos_original
+
+```{r}
+library(forecast)
+
+accuracy(forecast_datos_original_ts_SMA)
+```
+
+
+
+
+#### Weighted Moving Average (SMA)
+
+```{r}
+
+# Load the TTR package
+library(TTR)
+
+datos_original_ts_WMA <- WMA(datos_original_ts, n = 6, wts = c(0.05, 0.05, 0.1, 0.2, 0.3, 0.3))
+
+datos_original_ts_WMA_pc <- WMA(datos_original_ts_train, n = 6, wts = c(0.05, 0.05, 0.1, 0.2, 0.3, 0.3))
+```
+
+
+
+```{r}
+plot(datos_original_ts_WMA, col = "blue", main = "Datos_original con WMA ")
+lines(datos_original_ts, col="violet")
+legend("bottomright", legend = c("Datos_original con WMA", "Datos_original"), col = c("blue", "violet"), lty = 1)
+```
+
+
+
+
+
+#### Calculo de predección con Weighted Moving Average (WMA) de datos_original
+
+```{r}
+library(forecast)
+
+forecast_datos_original_ts_WMA<-forecast(datos_original_ts_WMA_pc, h=12)
+forecast_datos_original_ts_WMA
+plot(forecast_datos_original_ts_WMA)
+```
+
+#### Calculo de errror con Weighted Moving Average (WMA) de datos_original
+
+```{r}
+library(forecast)
+
+accuracy(forecast_datos_original_ts_WMA)
+```
+
 
 
 ## Intentemos ahora aplicar el modelo HoltWinters method 
@@ -240,6 +247,13 @@ typeof(datos_original_ts_HW)
 ```
 
 
+Vamos a plotear el resultado del Holt-Winters
+
+```{r}
+plot(datos_original_ts_HW)
+
+```
+
 ### Ploteo de datos_original_ts_HW
 
 ```{r}
@@ -248,13 +262,6 @@ lines(datos_original_ts_HW$x , col='pink')
 ```
 
 
-
-Vamos a plotear el forecast
-
-```{r}
-plot(datos_original_ts_HW)
-
-```
 
 ```{r}
 head(datos_original_ts_HW$fitted)
@@ -288,7 +295,7 @@ datos_original_ts_HW_forecast$mean
 ```{r}
 library(forecast)
 
-accuracy(datos_original_ts$VARIABLE[202:213] ,datos_original_ts_HW_forecast$mean )
+accuracy(datos_original_ts_test ,datos_original_ts_HW_forecast$mean )
 ```
 
 
@@ -392,7 +399,7 @@ plot(prediccion_modelo_lineal_simple1_datos_original$fit)
 
 
 ```{r}
-accuracy(datos_original_ts$VARIABLE[202:213] , prediccion_modelo_lineal_simple1_datos_original$fit)
+accuracy(datos_original_ts_test , prediccion_modelo_lineal_simple1_datos_original$fit)
 ```
 
 
@@ -524,7 +531,7 @@ pred_ARIMA_1_2_1_datos_original$pred
 #### Calculo de errores del modelo ARIMA para los datos_original
 
 ```{r}
-accuracy(datos_original_ts$VARIABLE[202:213] ,pred_ARIMA_1_2_1_datos_original$pred )
+accuracy(datos_original_ts_test ,pred_ARIMA_1_2_1_datos_original$pred )
 ```
 
 
@@ -560,7 +567,7 @@ forecast_SARIMA_PDQS_datos_original$mean
 #### Calculo de errores del Datos_orignal con SARIMA + PDQ S
 
 ```{r}
-accuracy(datos_original_ts$VARIABLE[202:213] ,forecast_SARIMA_PDQS_datos_original$mean )
+accuracy(datos_original_ts_test ,forecast_SARIMA_PDQS_datos_original$mean )
 ```
 
 
