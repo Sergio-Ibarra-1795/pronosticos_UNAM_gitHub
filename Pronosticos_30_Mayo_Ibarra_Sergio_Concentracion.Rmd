@@ -37,6 +37,9 @@ library(hydroGOF)
 
 
 ```{r}
+library(readxl)
+
+
 # Read the Excel file
 concentracion_datos_original <- read_excel('concentracionCO.xlsx')
 
@@ -301,29 +304,29 @@ Vamos a proceder a plotear los residuos de mi modelo lineal
 plot(modelo_lineal_simple1_concentracion_datos_original)
 ```
 
-Se observa que los reiduos no tienen pendiente definida, tendencia o siguen un patron establecido 
+Se observa que los reiduos no tienen pendiente definida, tendencia o siguen un patron establecido, en general se observa que las gráficas del error son muy buenas 
 
 
 #### Testeo del 'modelo lineal generalizado simple'  haciendo la predición de los datos de test 
 ```{r}
 
 
-colorado_datos_original_ts_test_frame <- data.frame(colorado_datos_original_ts_test,rep_mes[577:600],tend[577:600])
-head(colorado_datos_original_ts_test_frame)
-tail(colorado_datos_original_ts_test_frame)
-dim(colorado_datos_original_ts_test_frame)
+concentracion_datos_original_ts_test_frame <- data.frame(concentracion_datos_original_ts_test,rep_mes[145:154],tend[145:154])
+head(concentracion_datos_original_ts_test_frame)
+tail(concentracion_datos_original_ts_test_frame)
+dim(concentracion_datos_original_ts_test_frame)
 
 ```
 
 
 
 ```{r}
-colorado_datos_original_ts_test_frame$rep_mes <-colorado_datos_original_ts_test_frame$rep_mes.577.600.
-colorado_datos_original_ts_test_frame$rep_mes.577.600. <- NULL
-colorado_datos_original_ts_test_frame$tend <-colorado_datos_original_ts_test_frame$tend.577.600.
-colorado_datos_original_ts_test_frame$tend.577.600. <- NULL
+concentracion_datos_original_ts_test_frame$rep_mes <-concentracion_datos_original_ts_test_frame$rep_mes.145.154.
+concentracion_datos_original_ts_test_frame$rep_mes.145.154. <- NULL
+concentracion_datos_original_ts_test_frame$tend <-concentracion_datos_original_ts_test_frame$tend.145.154.
+concentracion_datos_original_ts_test_frame$tend.145.154. <- NULL
 
-colorado_datos_original_ts_test_frame
+concentracion_datos_original_ts_test_frame
 ```
 
 
@@ -332,14 +335,14 @@ colorado_datos_original_ts_test_frame
 #### Calculo de predicción del 'modelo lineal generalizado simple' para los datos_original
 
 ```{r}
-prediccion_modelo_lineal_simple1_colorado_datos_original <- predict(modelo_lineal_simple1_colorado_datos_original, newdata = colorado_datos_original_ts_test_frame, se.fit = TRUE)
+prediccion_modelo_lineal_simple1_concentracion_datos_original <- predict(modelo_lineal_simple1_concentracion_datos_original, newdata = concentracion_datos_original_ts_test_frame, se.fit = TRUE)
 
 
-prediccion_modelo_lineal_simple1_colorado_datos_original
+prediccion_modelo_lineal_simple1_concentracion_datos_original
 ```
 
 ```{r}
-plot(prediccion_modelo_lineal_simple1_colorado_datos_original$fit)
+plot(prediccion_modelo_lineal_simple1_concentracion_datos_original$fit)
 ```
 
 
@@ -350,10 +353,10 @@ plot(prediccion_modelo_lineal_simple1_colorado_datos_original$fit)
 
 
 ```{r}
-accuracy(colorado_datos_original_ts_test , prediccion_modelo_lineal_simple1_colorado_datos_original$fit)
+accuracy(concentracion_datos_original_ts_test , prediccion_modelo_lineal_simple1_concentracion_datos_original$fit)
 ```
 
-El MAPE del modelo lineal generalizado simple es mayor que el de los métodos de SMA y WMA 
+El MAPE del modelo lineal generalizado simple es MENOR que el de los métodos de SMA y WMA 
 
 
 
@@ -368,16 +371,18 @@ library(forecast)
 
 #par(mfrow=c(2,1))
 
-acf_colorado_datos_original_ts_sin_diferenciar <- Acf(colorado_datos_original_ts, lag.max = 100, ci.type = "ma")
-acf_colorado_datos_original_ts_sin_diferenciar
+acf_concentracion_datos_original_ts_sin_diferenciar <- Acf(concentracion_datos_original_ts, lag.max = 100, ci.type = "ma")
+acf_concentracion_datos_original_ts_sin_diferenciar
 
 
-pacf_datos_colorado_original_ts_sin_diferenciar <- Pacf(colorado_datos_original_ts, lag.max = 100, ci.type = "ma")
-pacf_datos_colorado_original_ts_sin_diferenciar
+pacf_datos_concentracion_original_ts_sin_diferenciar <- Pacf(concentracion_datos_original_ts, lag.max = 100, ci.type = "ma")
+pacf_datos_concentracion_original_ts_sin_diferenciar
 
 ```
 
-La función ACF de la serie colorado, nos muestra claramente la estacionalidad marcadísima cada 12 meses y como en general No tiene una forma de decaimitno constant. Hagamos una prueba de estacionariedad 
+La función ACF de la serie colorado, nos muestra claramente una forma de decaimiento constante. Hagamos una prueba de estacionariedad 
+
+
 
 #### Se lleva a cabo el tet de Dickey-Fulley (Ho: Serie no estacionaria) a la serie de datos_original <sin diferenciar>
 
@@ -387,16 +392,53 @@ La función ACF de la serie colorado, nos muestra claramente la estacionalidad m
 library(urca)
 
 # Perform ADF test for stationarity
-adf_test_datos_colorado_original_ts <- ur.df(colorado_datos_original_ts)
+adf_test_datos_concentracion_original_ts <- ur.df(concentracion_datos_original_ts)
 
 # Print the ADF test results
-summary(adf_test_datos_colorado_original_ts)
+summary(adf_test_datos_concentracion_original_ts)
 
 ```
 Se observa como el valor p de la prueva DF de estacioriedad fue menor a 0.05 por lo tanto se rechaza Ho que indicaba que la serie no era estacionaria y se acepta H1 
 
 
-Con base en las gráficas de ACF y PACF se decide probar un modleo ARIMA (1,0,2)
+
+
+
+#### Vamos a diferenciar la serie de datos_orignal 'para hacerlo estacionaria'
+
+```{r}
+# Calculate the difference between consecutive elements
+datos_concentracion_original_ts_diferencia1 <- diff(concentracion_datos_original_ts, differences = 1)
+
+# Print the results
+print(datos_concentracion_original_ts_diferencia1)
+
+```
+
+
+
+#### ACF & PACF para los datos_original con 1 diferencia  'estacionariazada'
+
+
+```{r}
+library(forecast)
+
+#par(mfrow=c(2,1))
+
+acf_datos_concentracion_original_ts_diferencia1 <- Acf(datos_concentracion_original_ts_diferencia1, lag.max = 100, ci.type = "ma")
+acf_datos_concentracion_original_ts_diferencia1
+
+
+pacf_datos_concentracion_original_ts_diferencia1 <- Pacf(datos_concentracion_original_ts_diferencia1, lag.max = 100, ci.type = "ma")
+pacf_datos_concentracion_original_ts_diferencia1
+```
+
+
+La diferenciación de la seria ayudó a hacerla estacionaria y además a que se puediera disntinguir tanto los valores significativos para la parte MA del ARIMA, como la estacionalidad marcada cada 12 meses 
+
+
+
+Con base en las gráficas de ACF y PACF se decide probar un modleo ARIMA (2,1,1)
 
 
 #### Ajustae y predicicon de Demanda_electrico con modelo ARIMA 
@@ -407,16 +449,16 @@ Con base en las gráficas de ACF y PACF se decide probar un modleo ARIMA (1,0,2)
 library(astsa)
 
 # Fit the SARIMA model
-ARIMA_1_0_2_colorado_datos_original <- astsa::sarima(colorado_datos_original_ts_train , p=1, d=0, q=2)
+ARIMA_2_1_1_concentracion_datos_original <- astsa::sarima(concentracion_datos_original_ts_train , p=2, d=1, q=1)
 
 # Print the model summary
-summary(ARIMA_1_0_2_colorado_datos_original)
+summary(ARIMA_2_1_1_concentracion_datos_original)
 
 ```
-En general se observa para el modelo ARIMA_1_0_2_colorado_datos_original: 
+En general se observa para el modelo ARIMA_2_1_1_concentracion_datos_original: 
 
-Los errores estandarizados tienen un compartiempo aprorximadamente normal con meida cero 
-Los errores estandarizados no tiene una correlación signifcativa (Excepto cada 12 meses, lo que se arreglará en el SARIMA)
+Los errores estandarizados tienen un compartiempo aprorximadamente normal con media cero 
+Los errores estandarizados no tiene una correlación signifcativa
 
 
 #### Calculo de predicción del ARIMA para los datos_original
@@ -426,8 +468,8 @@ Los errores estandarizados no tiene una correlación signifcativa (Excepto cada 
 # Get the predictors
 
 
-pred_ARIMA_1_0_2_colorado_datos_original <- sarima.for(colorado_datos_original_ts_train, n.ahead=24,1,0,2)
-pred_ARIMA_1_0_2_colorado_datos_original
+pred_ARIMA_2_1_1_concentracion_datos_original <- sarima.for(concentracion_datos_original_ts_train, n.ahead=9,2,1,1)
+pred_ARIMA_2_1_1_concentracion_datos_original
 
 
 ```
@@ -436,7 +478,7 @@ pred_ARIMA_1_0_2_colorado_datos_original
 
 
 ```{r}
-pred_ARIMA_1_0_2_colorado_datos_original$pred
+pred_ARIMA_2_1_1_concentracion_datos_original$pred
 ```
 
 
@@ -445,10 +487,10 @@ pred_ARIMA_1_0_2_colorado_datos_original$pred
 #### Calculo de errores del modelo ARIMA para los datos_original
 
 ```{r}
-accuracy(colorado_datos_original_ts_test ,pred_ARIMA_1_0_2_colorado_datos_original$pred )
+accuracy(concentracion_datos_original_ts_test ,pred_ARIMA_2_1_1_concentracion_datos_original$pred )
 ```
 
-El MAPE del modelo ARIMA 1,0,2 es mayor que el de los métodos de SMA y WMA, pero menor que el del método lineal generalizado simple 
+El MAPE del modelo ARIMA 2,1,1 es muy bueno aún, aunque ligeramente mayor que el modelo lineal generalizado simple 
 
 
 
@@ -460,33 +502,35 @@ El MAPE del modelo ARIMA 1,0,2 es mayor que el de los métodos de SMA y WMA, per
 library(forecast)
 
 # Fit the SARIMA model
-SARIMA_colorado_datos_original <- Arima(colorado_datos_original_ts_train, order = c(1, 0, 2), seasonal = list(order = c(0, 1, 1), period = 12))
+SARIMA_concentracion_datos_original <- Arima(concentracion_datos_original_ts_train, order = c(2, 1, 1), seasonal = list(order = c(0, 1, 0), period = 12))
 
 # Forecast for the next 12 periods
-forecast_SARIMA_colorado_datos_original <- forecast(SARIMA_colorado_datos_original, h = 24)
+forecast_SARIMA_concentracion_datos_original <- forecast(SARIMA_concentracion_datos_original, h = 9)
 
 # Print the forecasted values
-print(forecast_SARIMA_colorado_datos_original)
+print(forecast_SARIMA_concentracion_datos_original)
 ```
 
 ```{r}
-plot(forecast_SARIMA_colorado_datos_original)
+plot(forecast_SARIMA_concentracion_datos_original)
 ```
 
 Se observa claramente como los modelos SARIMA son capaces de tomar encuenta la estacionalidad de la data y aplicarla a los pronósticos 
 
 ```{r}
-forecast_SARIMA_colorado_datos_original$mean
+forecast_SARIMA_concentracion_datos_original$mean
 ```
 
 
 #### Calculo de errores del Datos_orignal con SARIMA + PDQ S
 
 ```{r}
-accuracy(colorado_datos_original_ts_test ,forecast_SARIMA_colorado_datos_original$mean )
+accuracy(concentracion_datos_original_ts_test ,forecast_SARIMA_concentracion_datos_original$mean )
 ```
 
-El mejor MAPE obtenido al momento para el caso de colorado es con el modelos SARIMA(1,0,2)[0,1,1]con S= 12
+El mejor MAPE obtenido al momento para el caso de colorado es con el modelos SARIMA(2,1,1)[0,1,0]con S= 12 así como el obtenido con el modelo lineal simple con variables dummy
+
+
 
 
 
