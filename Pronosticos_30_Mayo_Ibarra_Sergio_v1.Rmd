@@ -1,5 +1,5 @@
 ---
-title: "Pronosticos_30_Mayo_Ibarra_Sergio"
+title: "Pronosticos_30_Mayo_Ibarra_Sergio_v1"
 author: "Sergibar"
 date: "2023-05-30"
 output: html_document
@@ -62,31 +62,22 @@ dim(colorado_datos_original)
 
 
 
-Transformamos el tipo de dato de la columna DATE  a as.date column 
+#### Convertimos los colorado_datos_original a Serie de tiempo 
+
+Al observar la data se determina que existe una especie de estacionalidad que se repite cada 12 meses 
 
 ```{r}
-datos_original$Date <- as.Date(datos_original$Date, format = "%m/%d/%Y")
-head(datos_original)
-tail(datos_original)
 
-```
-
-
-
-
-#### Convertimos los datos_original a Serie de tiempo 
-
-```{r}
-datos_original_ts<- ts(datos_original$VARIABLE, frequency = 12, start =c(2005,1))
-head(datos_original_ts)
-typeof(datos_original_ts)
+colorado_datos_original_ts<- ts(colorado_datos_original$x, frequency = 12)
+head(colorado_datos_original_ts)
+typeof(colorado_datos_original_ts)
 
 ```
 
 
 Graficamos la serie del tiempo
 ```{r}
-plot(datos_original_ts, col = "violet", main = "Data_original")
+plot(colorado_datos_original_ts, col = "violet", main = "Colorado Data_original")
 
 ```
 
@@ -95,37 +86,46 @@ plot(datos_original_ts, col = "violet", main = "Data_original")
 ### Vamos a descomponer la data usando el metodo decompose para entender sus compoentes de tren, seasonalidad y aleatorio
 
 ```{r}
-datos_original_ts_decompose <- decompose(datos_original_ts_decompose)
-datos_original_ts_decompose
+colorado_datos_original_ts_decompose <- decompose(colorado_datos_original_ts)
+summary(colorado_datos_original_ts_decompose)
 ```
 
-
-Now let´s plot the (trend, seasonal and random components of the decompose analysis)
+Vamos a plotear la desmposición 
 
 ```{r}
-plot(datos_original_ts_decompose)
+plot(colorado_datos_original_ts_decompose)
 ```
 
+En general para los componentes de trend, estacionalidad y randomnes de nuestra variable Y se observa: 
+
+- Trend: No se observa un trend claramente negativo o positiv, si no mas bien una especie de "media constante" a lo largo del tiempo 
+
+- Estacionalidad: Se observa un componente repetitivo ciclico cada 12 meses
+
+- Random: Se observa una especie de ruido blanco, con media cero y una sd de alrededor de 2 
 
 
 
 ### Analicemos los valores de la variable y 
 
 ```{r}
-hist(datos_original_ts)
+hist(colorado_datos_original_ts)
 ```
 
 
 
 ```{r}
-summary(datos_original_ts)
+summary(colorado_datos_original_ts)
 ```
 
 
+Se observa que la gran mayoria de los valores de la variable y están en el intervalo de [0,2] y que claramente la variable no sigue una distribución normal 
 
 
 
-#### Separamos el df Demanda_electrico_importado en data sets train y test
+#### Separamos el colorado_datos_original_ts en data sets train y test
+
+Se tienen 600 datos mensuales, por lo que el train serpa de 576 datos, para que el test sea de 24 datos o 2 años 
 
 ```{r}
 
@@ -133,11 +133,9 @@ summary(datos_original_ts)
 
 
 # Subset the data to keep rows from the beginning until train_end and all columns
-datos_original_ts_train <- datos_original_ts[1:201,]
-head(datos_original_ts_train)
-tail(datos_original_ts_train)
-dim(datos_original_ts_train)
-
+colorado_datos_original_ts_train <- colorado_datos_original_ts[1:576]
+head(colorado_datos_original_ts_train)
+tail(colorado_datos_original_ts_train)
 
 
 ```
@@ -148,10 +146,9 @@ dim(datos_original_ts_train)
 # Subset the data to keep rows from the beginning until train_end and all columns
 
 
-datos_original_ts_test <- datos_original_ts[202:213,]
-head(datos_original_ts_test)
-dim(datos_original_ts_test)
-
+colorado_datos_original_ts_test <- colorado_datos_original_ts[577:600]
+head(colorado_datos_original_ts_test)
+tail(colorado_datos_original_ts_test)
 
 
 ```
@@ -164,9 +161,10 @@ dim(datos_original_ts_test)
 # Load the TTR package
 library(TTR)
 
-datos_original_ts_SMA <- SMA(datos_original_ts, n=6)
+colorado_datos_original_ts_SMA <- SMA(colorado_datos_original_ts, n=3)
 
-datos_original_ts_SMA_pc <- SMA(datos_original_ts_train, n=6)
+
+colorado_datos_original_ts_SMA_pc <- SMA(colorado_datos_original_ts_train, n=3)
 
 
 
@@ -176,8 +174,8 @@ datos_original_ts_SMA_pc <- SMA(datos_original_ts_train, n=6)
 
 
 ```{r}
-plot(datos_original_ts_SMA, col = "green", main = "Datos_original con SMA ")
-lines(datos_original_ts, col="violet")
+plot(colorado_datos_original_ts_SMA, col = "green", main = "Datos_original con SMA ")
+lines(colorado_datos_original_ts, col="violet")
 legend("bottomright", legend = c("Datos_original con SMA", "Datos_original"), col = c("green", "violet"), lty = 1)
 ```
 
@@ -187,9 +185,9 @@ legend("bottomright", legend = c("Datos_original con SMA", "Datos_original"), co
 ```{r}
 library(forecast)
 
-forecast_datos_original_ts_SMA<-forecast(datos_original_ts_SMA_pc, h=12)
-forecast_datos_original_ts_SMA
-plot(forecast_datos_original_ts_SMA)
+forecast_colorado_datos_original_ts_SMA<-forecast(colorado_datos_original_ts_SMA_pc, h=24)
+forecast_colorado_datos_original_ts_SMA
+plot(forecast_colorado_datos_original_ts_SMA)
 ```
 
 #### Calculo de errror con Simple Moving Average (SMA) de datos_original
@@ -197,9 +195,10 @@ plot(forecast_datos_original_ts_SMA)
 ```{r}
 library(forecast)
 
-accuracy(forecast_datos_original_ts_SMA)
+accuracy(forecast_colorado_datos_original_ts_SMA)
 ```
 
+Con el método de Simple Moving Average (SMA) aplicado a los datos de colorado, se obtuvo un MAPE de ~ 39% en el forecast de 24 meses de datos de test con 576 meses de datos de entrenamiento
 
 
 
@@ -210,16 +209,16 @@ accuracy(forecast_datos_original_ts_SMA)
 # Load the TTR package
 library(TTR)
 
-datos_original_ts_WMA <- WMA(datos_original_ts, n = 6, wts = c(0.05, 0.05, 0.1, 0.2, 0.3, 0.3))
+colorado_datos_original_ts_WMA <- WMA(colorado_datos_original_ts, n = 3, wts = c(0.333, 0.333, 0.333))
 
-datos_original_ts_WMA_pc <- WMA(datos_original_ts_train, n = 6, wts = c(0.05, 0.05, 0.1, 0.2, 0.3, 0.3))
+colorado_datos_original_ts_WMA_pc <- WMA(colorado_datos_original_ts_train, n = 3, wts = c(0.333, 0.333, 0.333))
 ```
 
 
 
 ```{r}
-plot(datos_original_ts_WMA, col = "blue", main = "Datos_original con WMA ")
-lines(datos_original_ts, col="violet")
+plot(colorado_datos_original_ts_WMA, col = "blue", main = "Datos_original con WMA ")
+lines(colorado_datos_original_ts, col="violet")
 legend("bottomright", legend = c("Datos_original con WMA", "Datos_original"), col = c("blue", "violet"), lty = 1)
 ```
 
@@ -232,9 +231,9 @@ legend("bottomright", legend = c("Datos_original con WMA", "Datos_original"), co
 ```{r}
 library(forecast)
 
-forecast_datos_original_ts_WMA<-forecast(datos_original_ts_WMA_pc, h=12)
-forecast_datos_original_ts_WMA
-plot(forecast_datos_original_ts_WMA)
+forecast_colorado_datos_original_ts_WMA<-forecast(colorado_datos_original_ts_WMA_pc, h=24)
+forecast_colorado_datos_original_ts_WMA
+plot(forecast_colorado_datos_original_ts_WMA)
 ```
 
 #### Calculo de errror con Weighted Moving Average (WMA) de datos_original
@@ -242,20 +241,29 @@ plot(forecast_datos_original_ts_WMA)
 ```{r}
 library(forecast)
 
-accuracy(forecast_datos_original_ts_WMA)
+accuracy(forecast_colorado_datos_original_ts_WMA)
 ```
+
+
+Con el método de Wighted Moving Average (WMA) aplicado a los datos de colorado, se obtuvo un MAPE de ~ 39 en el forecast de 24 meses de datos de test con 576 meses de datos de entrenamiento
 
 
 
 ## Intentemos ahora aplicar el modelo HoltWinters a los datos_original 
 
+```{r}
+str(colorado_datos_original_ts_train)
+
+colorado_datos_original_ts_train_T <- ts(colorado_datos_original_ts_train)
+str(colorado_datos_original_ts_train_T)
+```
+
 
 ```{r}
 
 
-datos_original_ts_HW <- HoltWinters(datos_original_ts_train)
-head(datos_original_ts_HW)
-typeof(datos_original_ts_HW)
+colorado_datos_original_ts_HW <- HoltWinters(colorado_datos_original_ts_train_T)
+
 ```
 
 

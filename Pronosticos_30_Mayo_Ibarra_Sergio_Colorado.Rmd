@@ -1,0 +1,502 @@
+---
+title: "Pronosticos_30_Mayo_Ibarra_Sergio_Colorado"
+author: "Sergibar"
+date: "2023-05-30"
+output: html_document
+---
+
+## UNAM Maestría en Ingeniería de Sistemas 
+## Pronósticos 
+## Dr. Jair Morales Camarena 
+## Exmámen Final
+## Alumno: Ibarra Ramírez Sergio 
+
+
+Importación de librerias necesarias para trabajar 
+```{r}
+
+
+library(tidyverse)      # data manipulation and visualization
+library(lubridate)      # easily work with dates and times
+library(fpp2)           # working with time series data
+library(zoo)
+library(ggplot2)
+library(plyr)
+library(dplyr)
+library(knitr)
+library(TTR)
+library(hydroGOF)
+
+
+```
+
+
+# coloradoflow 
+
+### Importación de los datos de nuestra serie que se va a llamar datos_original
+
+
+```{r}
+
+library(readxl)
+
+
+# Read the Excel file
+colorado_datos_original <- read_excel('coloradoflow.xlsx')
+
+# View the imported data
+print(colorado_datos_original)
+
+
+
+```
+
+
+Nos aseguramos que la data se haya importado correctamente
+```{r}
+
+summary(colorado_datos_original)
+typeof(colorado_datos_original)
+dim(colorado_datos_original)
+```
+
+
+
+#### Convertimos los colorado_datos_original a Serie de tiempo 
+
+Al observar la data se determina que existe una especie de estacionalidad que se repite cada 12 meses 
+
+```{r}
+
+colorado_datos_original_ts<- ts(colorado_datos_original$x, frequency = 12)
+head(colorado_datos_original_ts)
+typeof(colorado_datos_original_ts)
+
+```
+
+
+Graficamos la serie del tiempo
+```{r}
+plot(colorado_datos_original_ts, col = "violet", main = "Colorado Data_original")
+
+```
+
+
+
+### Vamos a descomponer la data usando el metodo decompose para entender sus compoentes de tren, seasonalidad y aleatorio
+
+```{r}
+colorado_datos_original_ts_decompose <- decompose(colorado_datos_original_ts)
+summary(colorado_datos_original_ts_decompose)
+```
+
+Vamos a plotear la desmposición 
+
+```{r}
+plot(colorado_datos_original_ts_decompose)
+```
+
+En general para los componentes de trend, estacionalidad y randomnes de nuestra variable Y se observa: 
+
+- Trend: No se observa un trend claramente negativo o positiv, si no mas bien una especie de "media constante" a lo largo del tiempo 
+
+- Estacionalidad: Se observa un componente repetitivo ciclico cada 12 meses
+
+- Random: Se observa una especie de ruido blanco, con media cero y una sd de alrededor de 2 
+
+
+
+### Analicemos los valores de la variable y 
+
+```{r}
+hist(colorado_datos_original_ts)
+```
+
+
+
+```{r}
+summary(colorado_datos_original_ts)
+```
+
+
+Se observa que la gran mayoria de los valores de la variable y están en el intervalo de [0,2] y que claramente la variable no sigue una distribución normal 
+
+
+
+#### Separamos el colorado_datos_original_ts en data sets train y test
+
+Se tienen 600 datos mensuales, por lo que el train serpa de 576 datos, para que el test sea de 24 datos o 2 años 
+
+```{r}
+
+# Split the data into training and testing sets
+
+
+# Subset the data to keep rows from the beginning until train_end and all columns
+colorado_datos_original_ts_train <- colorado_datos_original_ts[1:576]
+head(colorado_datos_original_ts_train)
+tail(colorado_datos_original_ts_train)
+
+
+```
+
+
+
+```{r}
+# Subset the data to keep rows from the beginning until train_end and all columns
+
+
+colorado_datos_original_ts_test <- colorado_datos_original_ts[577:600]
+head(colorado_datos_original_ts_test)
+tail(colorado_datos_original_ts_test)
+
+
+```
+
+
+#### Apliquemos un modelo de Simple Moving Average (SMA) a los  datos_original
+
+```{r}
+
+# Load the TTR package
+library(TTR)
+
+colorado_datos_original_ts_SMA <- SMA(colorado_datos_original_ts, n=3)
+
+
+colorado_datos_original_ts_SMA_pc <- SMA(colorado_datos_original_ts_train, n=3)
+
+
+
+## datos_original_ts_SMA <- ma(datos_original_ts, oder=2, center=TRUE)
+```
+
+
+
+```{r}
+plot(colorado_datos_original_ts_SMA, col = "green", main = "Datos_original con SMA ")
+lines(colorado_datos_original_ts, col="violet")
+legend("bottomright", legend = c("Datos_original con SMA", "Datos_original"), col = c("green", "violet"), lty = 1)
+```
+
+
+#### Calculo de predección con Simple Moving Average (SMA) de datos_original
+
+```{r}
+library(forecast)
+
+forecast_colorado_datos_original_ts_SMA<-forecast(colorado_datos_original_ts_SMA_pc, h=24)
+forecast_colorado_datos_original_ts_SMA
+plot(forecast_colorado_datos_original_ts_SMA)
+```
+
+#### Calculo de errror con Simple Moving Average (SMA) de datos_original
+
+```{r}
+library(forecast)
+
+accuracy(forecast_colorado_datos_original_ts_SMA)
+```
+
+Con el método de Simple Moving Average (SMA) aplicado a los datos de colorado, se obtuvo un MAPE de ~ 39% en el forecast de 24 meses de datos de test con 576 meses de datos de entrenamiento
+
+
+
+####Apliquemos un modelo de Weighted Moving Average (WMA)a los datos_original
+
+```{r}
+
+# Load the TTR package
+library(TTR)
+
+colorado_datos_original_ts_WMA <- WMA(colorado_datos_original_ts, n = 3, wts = c(0.333, 0.333, 0.333))
+
+colorado_datos_original_ts_WMA_pc <- WMA(colorado_datos_original_ts_train, n = 3, wts = c(0.333, 0.333, 0.333))
+```
+
+
+
+```{r}
+plot(colorado_datos_original_ts_WMA, col = "blue", main = "Datos_original con WMA ")
+lines(colorado_datos_original_ts, col="violet")
+legend("bottomright", legend = c("Datos_original con WMA", "Datos_original"), col = c("blue", "violet"), lty = 1)
+```
+
+
+
+
+
+#### Calculo de predección con Weighted Moving Average (WMA) de datos_original
+
+```{r}
+library(forecast)
+
+forecast_colorado_datos_original_ts_WMA<-forecast(colorado_datos_original_ts_WMA_pc, h=24)
+forecast_colorado_datos_original_ts_WMA
+plot(forecast_colorado_datos_original_ts_WMA)
+```
+
+#### Calculo de errror con Weighted Moving Average (WMA) de datos_original
+
+```{r}
+library(forecast)
+
+accuracy(forecast_colorado_datos_original_ts_WMA)
+```
+
+
+Con el método de Wighted Moving Average (WMA) aplicado a los datos de colorado, se obtuvo un MAPE de ~ 39 en el forecast de 24 meses de datos de test con 576 meses de datos de entrenamiento
+
+
+
+## Ahora intentemos ajustar un 'modelo lineal generalizado simple' a los datos_original
+
+Para ello vamos a construir una especie de "Variables dummy" de los meses del año 
+
+```{r}
+tend <- c(1:600)
+
+dim(tend)
+
+mes=c("ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic")
+
+rep_mes <- rep(mes,50)
+
+
+
+colorado_datos_original_ts_train_frame <- data.frame(colorado_datos_original_ts_train,rep_mes[1:576],tend[1:576])
+head(colorado_datos_original_ts_train_frame)
+tail(colorado_datos_original_ts_train_frame)
+dim(colorado_datos_original_ts_train_frame)
+
+```
+
+```{r}
+colorado_datos_original_ts_train_frame$rep_mes <-colorado_datos_original_ts_train_frame$rep_mes.1.576.
+colorado_datos_original_ts_train_frame$rep_mes.1.576. <- NULL
+colorado_datos_original_ts_train_frame$tend <-colorado_datos_original_ts_train_frame$tend.1.576.
+colorado_datos_original_ts_train_frame$tend.1.576. <- NULL
+
+colorado_datos_original_ts_train_frame
+```
+
+
+
+#### Se 'entrena' (en este caso, se define) al modelo lineal 'simple' con los datos de train 
+
+```{r}
+modelo_lineal_simple1_colorado_datos_original <- glm (colorado_datos_original_ts_train ~  rep_mes + tend, data=colorado_datos_original_ts_train_frame, family = gaussian(link = identity))
+modelo_lineal_simple1_colorado_datos_original
+```
+
+
+Se obtiene el summary y plot del modelo lineal 'simple'
+
+```{r}
+summary(modelo_lineal_simple1_colorado_datos_original)
+```
+
+Se puede observar que el modelo lineal simple resultante otorga valores estadisticamente significativos para el caso del intercepto y los "meses dummy" de: agost, dic, ene, feb, jul, jun , mar, may, nov , oct y sept con un valor de criterio de AIC de 1388 
+
+
+
+Vamos a proceder a plotear los residuos de mi modelo lineal 
+
+```{r}
+plot(modelo_lineal_simple1_colorado_datos_original)
+```
+
+Se observa que los reiduos no tienen pendiente definida, tendencia o siguen un patron establecido, sin embargo, tampoco se podría asumir que los errores son correctos pues para algunos valores el error es muy pequeño y para otros es muy grande lo que podría indicar que hal alguna variable o relación que no se está tomando en cuenta. 
+
+
+#### Testeo del 'modelo lineal generalizado simple'  haciendo la predición de los datos de test 
+```{r}
+
+
+colorado_datos_original_ts_test_frame <- data.frame(colorado_datos_original_ts_test,rep_mes[577:600],tend[577:600])
+head(colorado_datos_original_ts_test_frame)
+tail(colorado_datos_original_ts_test_frame)
+dim(colorado_datos_original_ts_test_frame)
+
+```
+
+
+
+```{r}
+colorado_datos_original_ts_test_frame$rep_mes <-colorado_datos_original_ts_test_frame$rep_mes.577.600.
+colorado_datos_original_ts_test_frame$rep_mes.577.600. <- NULL
+colorado_datos_original_ts_test_frame$tend <-colorado_datos_original_ts_test_frame$tend.577.600.
+colorado_datos_original_ts_test_frame$tend.577.600. <- NULL
+
+colorado_datos_original_ts_test_frame
+```
+
+
+
+
+#### Calculo de predicción del 'modelo lineal generalizado simple' para los datos_original
+
+```{r}
+prediccion_modelo_lineal_simple1_colorado_datos_original <- predict(modelo_lineal_simple1_colorado_datos_original, newdata = colorado_datos_original_ts_test_frame, se.fit = TRUE)
+
+
+prediccion_modelo_lineal_simple1_colorado_datos_original
+```
+
+```{r}
+plot(prediccion_modelo_lineal_simple1_colorado_datos_original$fit)
+```
+
+
+
+
+
+#### Calculo de errores del 'modelo lineal generalizado simple' para los datos_original
+
+
+```{r}
+accuracy(colorado_datos_original_ts_test , prediccion_modelo_lineal_simple1_colorado_datos_original$fit)
+```
+
+El MAPE del modelo lineal generalizado simple es mayor que el de los métodos de SMA y WMA 
+
+
+
+## Modelo SARIMA para Datos_original
+
+
+#### Determinación de ACF & PACF para el caso de la colorado_data_original (SIN ESTACIONALIZAR)
+
+```{r}
+#install.packages("forecast")
+library(forecast)
+
+#par(mfrow=c(2,1))
+
+acf_colorado_datos_original_ts_sin_diferenciar <- Acf(colorado_datos_original_ts, lag.max = 100, ci.type = "ma")
+acf_colorado_datos_original_ts_sin_diferenciar
+
+
+pacf_datos_colorado_original_ts_sin_diferenciar <- Pacf(colorado_datos_original_ts, lag.max = 100, ci.type = "ma")
+pacf_datos_colorado_original_ts_sin_diferenciar
+
+```
+
+La función ACF de la serie colorado, nos muestra claramente la estacionalidad marcadísima cada 12 meses y como en general No tiene una forma de decaimitno constant. Hagamos una prueba de estacionariedad 
+
+#### Se lleva a cabo el tet de Dickey-Fulley (Ho: Serie no estacionaria) a la serie de datos_original <sin diferenciar>
+
+```{r}
+# Install and load the "urca" package
+#install.packages("urca")
+library(urca)
+
+# Perform ADF test for stationarity
+adf_test_datos_colorado_original_ts <- ur.df(colorado_datos_original_ts)
+
+# Print the ADF test results
+summary(adf_test_datos_colorado_original_ts)
+
+```
+Se observa como el valor p de la prueva DF de estacioriedad fue menor a 0.05 por lo tanto se rechaza Ho que indicaba que la serie no era estacionaria y se acepta H1 
+
+
+Con base en las gráficas de ACF y PACF se decide probar un modleo ARIMA (1,0,2)
+
+
+#### Ajustae y predicicon de Demanda_electrico con modelo ARIMA 
+
+
+```{r}
+#install.packages("astsa")
+library(astsa)
+
+# Fit the SARIMA model
+ARIMA_1_0_2_colorado_datos_original <- astsa::sarima(colorado_datos_original_ts_train , p=1, d=0, q=2)
+
+# Print the model summary
+summary(ARIMA_1_0_2_colorado_datos_original)
+
+```
+En general se observa para el modelo ARIMA_1_0_2_colorado_datos_original: 
+
+Los errores estandarizados tienen un compartiempo aprorximadamente normal con meida cero 
+Los errores estandarizados no tiene una correlación signifcativa (Excepto cada 12 meses, lo que se arreglará en el SARIMA)
+
+
+#### Calculo de predicción del ARIMA para los datos_original
+
+```{r}
+
+# Get the predictors
+
+
+pred_ARIMA_1_0_2_colorado_datos_original <- sarima.for(colorado_datos_original_ts_train, n.ahead=24,1,0,2)
+pred_ARIMA_1_0_2_colorado_datos_original
+
+
+```
+
+
+
+
+```{r}
+pred_ARIMA_1_0_2_colorado_datos_original$pred
+```
+
+
+
+
+#### Calculo de errores del modelo ARIMA para los datos_original
+
+```{r}
+accuracy(colorado_datos_original_ts_test ,pred_ARIMA_1_0_2_colorado_datos_original$pred )
+```
+
+El MAPE del modelo ARIMA 1,0,2 es mayor que el de los métodos de SMA y WMA, pero menor que el del método lineal generalizado simple 
+
+
+
+#### Ajustae y predicicon de Demanda_original con modelo SARIMA + PDQ S
+
+
+#### Calculo de predicción del SARIMA PDQ S para los datos_original
+```{r}
+library(forecast)
+
+# Fit the SARIMA model
+SARIMA_colorado_datos_original <- Arima(colorado_datos_original_ts_train, order = c(1, 0, 2), seasonal = list(order = c(0, 1, 1), period = 12))
+
+# Forecast for the next 12 periods
+forecast_SARIMA_colorado_datos_original <- forecast(SARIMA_colorado_datos_original, h = 24)
+
+# Print the forecasted values
+print(forecast_SARIMA_colorado_datos_original)
+```
+
+```{r}
+plot(forecast_SARIMA_colorado_datos_original)
+```
+
+Se observa claramente como los modelos SARIMA son capaces de tomar encuenta la estacionalidad de la data y aplicarla a los pronósticos 
+
+```{r}
+forecast_SARIMA_colorado_datos_original$mean
+```
+
+
+#### Calculo de errores del Datos_orignal con SARIMA + PDQ S
+
+```{r}
+accuracy(colorado_datos_original_ts_test ,forecast_SARIMA_colorado_datos_original$mean )
+```
+
+El mejor MAPE obtenido al momento para el caso de colorado es con el modelos SARIMA(1,0,2)[0,1,1]con S= 12
+
+
+
+
+
+
+
+
