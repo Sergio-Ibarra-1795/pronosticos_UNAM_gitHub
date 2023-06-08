@@ -155,7 +155,7 @@ hist(Demanda_electrico_importado.ts_V3)
 
 
 ```{r}
-Demanda_electrico_importado.ts_V2
+Demanda_electrico_importado.ts_V3
 ```
 
 
@@ -203,7 +203,7 @@ text(x = 1, y = outlier_values, labels = outlier_values, pos = 4, offset = 0.5)
 
 Then we plot the 'original demanded gas in electric time series'
 ```{r}
-plot(Demanda_electrico_importado.ts_V2, col = "violet", main = "Demanda electrico 'original'_V2 ")
+plot(Demanda_electrico_importado.ts_V3, col = "violet", main = " Demanda de Gas Natural en sector eléctrico en México (Datos mensuales de 2005 a 2022)", cex.main = 0.9 , ylab="Demanda de gas [MMpcd]", xlab ="Tiempo")
 
 ```
 
@@ -432,12 +432,12 @@ library(forecast)
 
 #par(mfrow=c(2,1))
 
-acf_demanda_electrico_sin_diferencia_V2 <- Acf(Demanda_electrico_importado.ts_V2, lag.max = 100, ci.type = "ma")
-acf_demanda_electrico_sin_diferencia_V2
+acf_demanda_electrico_sin_diferencia_V3 <- Acf(Demanda_electrico_importado.ts_V3, lag.max = 100, ci.type = "ma", main="ACF para los datos de Demanda de gas en sector eléctrico en México")
+acf_demanda_electrico_sin_diferencia_V3
 
 
-pacf_demanda_electrico_sin_diferencia_V2 <- Pacf(Demanda_electrico_importado.ts_V2, lag.max = 100, ci.type = "ma")
-pacf_demanda_electrico_sin_diferencia_V2
+pacf_demanda_electrico_sin_diferencia_V3 <- Pacf(Demanda_electrico_importado.ts_V3, lag.max = 100, ci.type = "ma", main="PACF para los datos de Demanda de gas en sector eléctrico en México")
+pacf_demanda_electrico_sin_diferencia_V3
 
 ```
 
@@ -480,12 +480,12 @@ library(forecast)
 
 #par(mfrow=c(2,1))
 
-acf_demanda_electrico_diferencia1_V2 <- Acf(Demanda_electrico_diferencia1_V2, lag.max = 100, ci.type = "ma")
-acf_demanda_electrico_diferencia1_V2
+acf_demanda_electrico_diferencia1_V3 <- Acf(Demanda_electrico_diferencia1_V3, lag.max = 100, ci.type = "ma")
+acf_demanda_electrico_diferencia1_V3
 
 
-pacf_demanda_electrico_diferencia1_V2 <- Pacf(Demanda_electrico_diferencia1_V2, lag.max = 100, ci.type = "ma")
-pacf_demanda_electrico_diferencia1_V2
+pacf_demanda_electrico_diferencia1_V3 <- Pacf(Demanda_electrico_diferencia1_V3, lag.max = 100, ci.type = "ma")
+pacf_demanda_electrico_diferencia1_V3
 ```
 
 

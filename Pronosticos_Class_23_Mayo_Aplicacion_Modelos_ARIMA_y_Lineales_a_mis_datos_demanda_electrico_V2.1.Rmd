@@ -41,6 +41,8 @@ Demanda_electrico_importado<-read.csv("Demanda_electrico_2022_full1.csv", header
 ```
 
 
+
+
 Nos aseguramos que la data con el gas demandado en el sector electrico se haya importado correctamente
 ```{r}
 head(Demanda_electrico_importado)
